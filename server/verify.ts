@@ -9,9 +9,11 @@ const norm = (s: string) =>
     .replace(/[‘’‚′]/g, "'")
     .replace(/[“”„″]/g, '"')
     .replace(/[‐-―]/g, "-")
-    .replace(/[*_`#>|]/g, " ")
+    .replace(/[*_`"']/g, "") // quote marks, apostrophes and code/emphasis markers are not wording
+    .replace(/[#>|]/g, " ")
     .replace(/(^|\s)\d{1,2}[.)](?=\s)/g, " ") // ordered-list numbers between joined steps
     .replace(/\s+/g, " ")
+    .replace(/\s+([.,;:!?)\]])/g, "$1") // "authConfigs ," from stripped markup
     .trim();
 
 /**

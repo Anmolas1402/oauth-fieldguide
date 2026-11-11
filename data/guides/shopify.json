@@ -2,56 +2,57 @@
   "providerStatus": "identified",
   "provider": {
     "name": "Shopify",
-    "description": "Shopify is an e-commerce platform that allows developers to build standalone, embedded, and API-only applications using GraphQL and REST Admin APIs.",
+    "description": "Shopify is an e-commerce platform that allows developers to build applications using the GraphQL Admin API and OAuth authentication.",
     "assumption": null
   },
-  "oauthAppKind": "Shopify App (Public or Custom App)",
+  "oauthAppKind": "Shopify App",
   "authMethod": {
-    "text": "Shopify uses OAuth 2.0 authorization code grant flow for standalone and API-only integrations, as well as server-to-server token exchange/client credentials.",
-    "status": "inferred",
+    "text": "OAuth 2.0 (Authorization Code Grant or Token Exchange)",
+    "status": "verified",
     "sourceIds": [
+      "S1",
       "S4"
     ],
-    "quote": null
+    "quote": "Shopify is an e-commerce platform. This toolkit is GraphQL-first for new Admin API automations while retaining legacy REST compatibility actions for older workflows and numeric-ID interoperability"
   },
   "difficulty": {
-    "level": "medium",
-    "rationale": "Registering a custom app or testing on development stores is fast and requires no external review. However, distributing a public app across multiple stores requires App Store review, partner registration fees, and compliance checks for protected customer data."
+    "level": "high",
+    "rationale": "Requires managing client credentials, strict scoping, test store setup, billing integration, and public review for app store distribution."
   },
   "handsOnEffort": {
-    "estimate": "15-30 minutes",
-    "basis": "Assumes a developer creating a Shopify Partner account, setting up an app entry in the Dev Dashboard, copying the redirect URI to/from Composio, and configuring required API access scopes."
+    "estimate": "2 to 4 hours",
+    "basis": "Assumes creating a Partner account, setting up an app in the Dev Dashboard, configuring scopes, and wiring custom credentials into Composio."
   },
   "externalReview": {
     "requirement": "conditional",
     "summary": {
-      "text": "Custom apps installed in a single organization or dev stores require no review. Public apps distributed to multiple merchants require Shopify App Store approval and protected customer data access reviews.",
+      "text": "Public apps intended for the Shopify App Store must pass an external app review before distribution.",
       "status": "verified",
       "sourceIds": [
         "S5"
       ],
-      "quote": "Publish your app in the Shopify App Store and any merchant can install it once it passes review. A custom app takes the other path: one organization installs it directly, with no listing and no review."
+      "quote": "Before you submit your app to Shopify, you should do some final tests, validations, and administrative tasks to ensure that it's ready for review, and ready for merchants to use the app in production."
     },
     "triggers": [
       {
-        "text": "Distributing an app publicly for multi-store merchant installations via the Shopify App Store.",
-        "status": "inferred",
-        "sourceIds": [
-          "S6"
-        ],
-        "quote": null
-      },
-      {
-        "text": "Requesting access to Level 1 or Level 2 protected customer data in a public app.",
+        "text": "Distributing the app publicly via the Shopify App Store triggers a mandatory review.",
         "status": "verified",
         "sourceIds": [
-          "S8"
+          "S5"
         ],
-        "quote": "Public apps request access to protected customer data and protected customer fields through the Partner Dashboard."
+        "quote": "Before you submit your app to Shopify, you should do some final tests, validations, and administrative tasks to ensure that it's ready for review, and ready for merchants to use the app in production."
+      },
+      {
+        "text": "Requesting access to protected customer data requires additional approval in the Partner Dashboard.",
+        "status": "inferred",
+        "sourceIds": [
+          "S5"
+        ],
+        "quote": null
       }
     ],
     "publishedTimeline": {
-      "text": "Shopify does not publish an SLA or exact review duration in the retrieved documentation.",
+      "text": "Shopify publishes no review timeline in the retrieved documentation.",
       "status": "unknown",
       "sourceIds": [],
       "quote": null
@@ -60,81 +61,69 @@
   "prerequisites": [
     {
       "kind": "account",
-      "text": "A Shopify Partner account to access the Dev Dashboard and create applications.",
-      "status": "inferred",
-      "sourceIds": [
-        "S5",
-        "S7",
-        "S8"
-      ],
-      "quote": null
-    },
-    {
-      "kind": "plan",
-      "text": "A one-time registration fee if submitting for public distribution on the Shopify App Store.",
+      "text": "A Shopify Partner account is required to access the Dev Dashboard.",
       "status": "verified",
       "sourceIds": [
-        "S6"
+        "S5"
       ],
-      "quote": "Public distribution also requires registering for the Shopify App Store, which has a one-time fee."
+      "quote": "1. Log in to your Dev Dashboard."
+    },
+    {
+      "kind": "other",
+      "text": "A development store is needed to test app installation, OAuth flows, and billing.",
+      "status": "verified",
+      "sourceIds": [
+        "S5"
+      ],
+      "quote": "Development stores can be used to test apps to ensure they're free of bugs or otherwise incomplete."
     }
   ],
   "console": {
     "name": "Shopify Dev Dashboard",
-    "url": "https://dev.shopify.com/dashboard/",
+    "url": "https://dev.shopify.com/dashboard",
     "urlSeenInSources": true
   },
   "redirectRules": [
     {
-      "text": "The redirect URI sent in authorization requests must exactly match one of the redirect URLs configured in the Dev Dashboard or shopify.app.toml.",
+      "text": "Allowed redirection URLs must be configured in the Dev Dashboard or app configuration file.",
       "status": "verified",
       "sourceIds": [
-        "S4"
+        "S5"
       ],
-      "quote": "The URL Shopify redirects to after authorization. Must exactly match a redirect URI you've configured in the Dev Dashboard or your app's configuration TOML file."
-    },
-    {
-      "text": "Redirect URIs must be valid URLs (using HTTPS for production web applications).",
-      "status": "inferred",
-      "sourceIds": [
-        "S11"
-      ],
-      "quote": null
+      "quote": "Check your app URL and your redirect URLs."
     }
   ],
   "scopes": {
     "model": {
-      "text": "Scopes are provided as a comma-separated list. A write scope automatically grants its matching read scope.",
+      "text": "Access scopes define permissions granted to an access token, determining what the app can read and write.",
       "status": "verified",
       "sourceIds": [
         "S4"
       ],
-      "quote": "A write_* scope includes its matching read_* scope, so Shopify may return only the write scope. Treat a requested read_* as satisfied by its write_*."
+      "quote": "A named unit of access that a merchant grants your app, such as read_products or write_orders."
     },
     "examples": [
       {
         "scope": "read_products",
-        "grants": "Grants read access to product catalog and variants",
-        "tier": "Level 0",
+        "grants": "Grants read access to products.",
+        "tier": null,
         "sourceIds": [
-          "S4",
-          "S11"
+          "S4"
         ],
         "seenInSource": true
       },
       {
         "scope": "write_orders",
-        "grants": "Grants read and write access to orders and draft orders",
-        "tier": "Level 1/2 (Protected Customer Data)",
+        "grants": "Grants read and write access to orders.",
+        "tier": null,
         "sourceIds": [
-          "S4",
-          "S8"
+          "S4"
         ],
         "seenInSource": true
       },
       {
         "scope": "read_all_orders",
-        "grants": "Grants access to view orders older than the default 60-day window",
+        "grants": "Grants access to read all orders beyond default scope sets.",
         "tier": null,
         "sourceIds": [
           "S1"
@@ -145,13 +134,88 @@
   },
   "steps": [
     {
-      "title": "Start App Creation in Composio",
-      "action": "Open the Composio Dashboard, navigate to Auth Configs, select Shopify, and copy the provided OAuth callback/redirect URI.",
+      "title": "Create a Shopify Partner Account",
+      "action": "Sign up for a Shopify Partner account to gain access to the Dev Dashboard.",
+      "where": "Shopify Partner Signup",
+      "link": "https://www.shopify.com/partners",
+      "actor": "human_only",
+      "actorReason": "Creating accounts requires human identity and legal agreement.",
+      "text": "Register for a Shopify Partner account to begin building apps.",
+      "status": "inferred",
+      "sourceIds": [
+        "S5"
+      ],
+      "quote": null,
+      "linkSeenInSources": true
+    },
+    {
+      "title": "Create an App in the Dev Dashboard",
+      "action": "Navigate to Apps, click create app, and configure your app name and settings.",
+      "where": "Shopify Dev Dashboard",
+      "link": "https://dev.shopify.com/dashboard",
+      "actor": "human_only",
+      "actorReason": "Developer console actions require a logged-in human user.",
+      "text": "Log in to your Dev Dashboard, click Apps, and navigate to the App overview page.",
+      "status": "verified",
+      "sourceIds": [
+        "S5"
+      ],
+      "quote": "1. Log in to your Dev Dashboard. 2. Click Apps. 3. Click the name of your app to navigate to the App overview page.",
+      "linkSeenInSources": true
+    },
+    {
+      "title": "Configure Redirect URIs and Scopes",
+      "action": "Set your app URL and allowed redirection URLs in the app configuration.",
+      "where": "Shopify Dev Dashboard",
+      "link": "https://dev.shopify.com/dashboard",
+      "actor": "agent_assists",
+      "actorReason": "An agent can draft redirect URLs and scope lists, but a human must save them in the console.",
+      "text": "Check your app URL and your redirect URLs in the active app version settings.",
+      "status": "verified",
+      "sourceIds": [
+        "S5"
+      ],
+      "quote": "5. Check your app URL and your redirect URLs. 6. Review and test the URLs that you provided.",
+      "linkSeenInSources": true
+    },
+    {
+      "title": "Obtain Client ID and Client Secret",
+      "action": "Copy the generated Client ID and Client Secret from your app credentials settings.",
+      "where": "Shopify Dev Dashboard",
+      "link": "https://dev.shopify.com/dashboard",
+      "actor": "human_only",
+      "actorReason": "Viewing and copying secret credentials requires a human operator.",
+      "text": "Retrieve the Client ID and Client Secret issued when you create your app.",
+      "status": "verified",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": "The credentials that identify your app, issued when you create it. The client ID is public. The client secret isn't",
+      "linkSeenInSources": true
+    },
+    {
+      "title": "Create a Custom Auth Config in Composio",
+      "action": "Create an OAuth2 auth config in Composio and paste your Shopify Client ID and Client Secret.",
       "where": "Composio Dashboard",
       "link": "https://dashboard.composio.dev/~/project/auth-configs",
+      "actor": "human_only",
+      "actorReason": "Entering sensitive credentials into Composio requires a human developer.",
+      "text": "Create the auth config in the Composio dashboard and enter the required credential fields.",
+      "status": "verified",
+      "sourceIds": [
+        "S3"
+      ],
+      "quote": "1. Click Create Auth Config 2. Select the toolkit 3. Choose the auth scheme (OAuth2, API Key, Bearer Token, etc.) 4. Follow the dashboard instructions for the required credential fields",
+      "linkSeenInSources": true
+    },
+    {
+      "title": "Add Composio Redirect URI to Shopify App",
+      "action": "Add the OAuth redirect URI provided by Composio into your allowed redirection URLs in the Shopify Dev Dashboard.",
+      "where": "Shopify Dev Dashboard",
+      "link": "https://dev.shopify.com/dashboard",
       "actor": "agent_assists",
-      "actorReason": "The agent can look up the required callback URL format and guide the user through credential configuration.",
-      "text": "Initiate the auth config creation process on Composio to obtain the redirect URL required by Shopify.",
+      "actorReason": "An agent can supply the exact URI string, but a human must paste it into the console.",
+      "text": "For OAuth toolkits, the dashboard shows the redirect URI to add in the provider's developer portal.",
       "status": "verified",
       "sourceIds": [
         "S3"
@@ -160,138 +224,84 @@
       "linkSeenInSources": true
     },
     {
-      "title": "Create an App in the Shopify Dev Dashboard",
-      "action": "Log in to the Shopify Dev Dashboard, navigate to Apps, and click Create App (or use the Shopify CLI to initialize the app).",
+      "title": "Test Connection on a Development Store",
+      "action": "Install your app on a development store to test authentication and API calls.",
       "where": "Shopify Dev Dashboard",
-      "link": "https://dev.shopify.com/dashboard/",
+      "link": "https://dev.shopify.com/dashboard",
       "actor": "human_only",
-      "actorReason": "Creating an app requires logging into an authenticated Shopify developer account.",
-      "text": "Create the app entry to generate the public app record and credentials.",
+      "actorReason": "Installing apps on a dev store requires manual human execution.",
+      "text": "On the app overview page, in the Installs section, click Install app and select the development store.",
       "status": "verified",
       "sourceIds": [
-        "S5",
-        "S7"
+        "S5"
       ],
-      "quote": "Dev Dashboard manages everything that belongs to the app itself: its credentials and scopes, your dev stores, user permissions, and its logs after merchants are running it.",
+      "quote": "4. On the app overview page, in the Installs section, click Install app. 5. Select the development store you wish to use.",
       "linkSeenInSources": true
     },
     {
-      "title": "Configure App URL and Redirect URLs",
-      "action": "In the app settings (or inside shopify.app.toml), add the Composio redirect URI under redirect_urls and enter your application URL.",
-      "where": "Shopify Dev Dashboard > Apps > Settings",
-      "link": "https://dev.shopify.com/dashboard/",
-      "actor": "agent_assists",
-      "actorReason": "The developer inputs the redirect URL provided by Composio into the configuration fields.",
-      "text": "Enter the Composio redirect URL in the app's settings so the authorization code grant can return tokens successfully.",
-      "status": "verified",
-      "sourceIds": [
-        "S4",
-        "S11"
-      ],
-      "quote": "You've added your app's redirect URI to your app's settings in the Dev Dashboard, or to the [auth] section of your shopify.app.toml.",
-      "linkSeenInSources": true
-    },
-    {
-      "title": "Copy Client ID and Secret to Composio",
-      "action": "Go to the Credentials section under Settings, copy the Client ID and Client Secret, and paste them into your Composio Auth Config.",
-      "where": "Shopify Dev Dashboard > Apps > Settings > Credentials",
-      "link": "https://dev.shopify.com/dashboard/",
+      "title": "Submit App for Review (Optional / Public Distribution)",
+      "action": "Submit your app for approval via the Partner Dashboard if distributing publicly.",
+      "where": "Shopify Partner Dashboard",
+      "link": "https://dev.shopify.com/dashboard",
       "actor": "human_only",
-      "actorReason": "The client secret is sensitive credential data that must be handled directly by the developer.",
-      "text": "Locate your Client ID and Client Secret in the Credentials section of the Dev Dashboard and input them into Composio.",
+      "actorReason": "Submitting applications for formal review is a human-only administrative action.",
+      "text": "Submit your app for approval by the Shopify app review team after meeting all requirements.",
       "status": "verified",
       "sourceIds": [
-        "S3",
-        "S7"
+        "S5"
       ],
-      "quote": "In the Composio dashboard: 1. Click Create Auth Config 2. Select the toolkit 3. Choose the auth scheme (OAuth2, API Key, Bearer Token, etc.) 4. Follow the dashboard instructions for the required credential fields",
-      "linkSeenInSources": true
-    },
-    {
-      "title": "Save Auth Config and Pass ID in Session",
-      "action": "Click Create in Composio to finalize the auth config, copy the generated auth config ID (e.g. ac_1234abcd), and pass it into your runtime session.",
-      "where": "Composio Dashboard",
-      "link": "https://dashboard.composio.dev/~/project/auth-configs",
-      "actor": "agent_assists",
-      "actorReason": "The agent can wire the generated auth config ID directly into the application code.",
-      "text": "Save the auth config and pass its ID when initializing sessions with the Shopify toolkit.",
-      "status": "verified",
-      "sourceIds": [
-        "S3"
-      ],
-      "quote": "After you enter the required credentials, click Create and copy the auth config ID (for example, ac_1234abcd).",
+      "quote": "submit your app for approval",
       "linkSeenInSources": true
     }
   ],
   "division": {
     "agentPrepares": [
-      "Determine required Admin API scopes and identify any protected customer data needs.",
-      "Format redirect URIs and draft shopify.app.toml configurations.",
-      "Wire the resulting auth config ID into runtime session code."
+      "Drafting required scope lists based on API needs",
+      "Preparing redirect URI strings for configuration"
     ],
     "agentAssists": [
-      "Guide the developer to the Shopify Dev Dashboard credentials and settings pages.",
-      "Walk the developer through adding redirect URLs and configuring access scopes."
+      "Guiding the developer through setting up allowed redirection URLs in the Dev Dashboard"
     ],
     "humanOnly": [
-      "Sign up or log in to the Shopify Partner account.",
-      "Copy and paste the Client Secret into Composio securely.",
-      "Pay the one-time registration fee and submit the app for App Store review if distributing publicly."
+      "Registering a Shopify Partner account",
+      "Creating apps and retrieving Client IDs and Secrets in the Dev Dashboard",
+      "Entering credentials into the Composio dashboard",
+      "Installing apps on development stores and submitting for formal review"
     ]
   },
   "risks": [
     {
-      "kind": "review",
-      "text": "Public apps requesting access to protected customer data (Level 1 and Level 2) must complete data protection review and state their data minimization justification.",
-      "status": "verified",
-      "sourceIds": [
-        "S8"
-      ],
-      "quote": "Public apps request access to protected customer data and protected customer fields through the Partner Dashboard."
-    },
-    {
-      "kind": "limit",
-      "text": "Without explicit approval for protected customer data fields, GraphQL Admin API queries return null for those fields and return an error message in the response.",
-      "status": "verified",
-      "sourceIds": [
-        "S8"
-      ],
-      "quote": "GraphQL requests to unapproved types will return an HTTP 200 Ok response with an error message in the errors hash."
-    },
-    {
-      "kind": "security",
-      "text": "Secret rotation must follow zero-downtime rotation procedures; revoking an old secret before updating access tokens invalidates merchant tokens.",
-      "status": "verified",
-      "sourceIds": [
-        "S7"
-      ],
-      "quote": "Don't revoke your old secret until you've updated all stored access tokens to use the new one. Revoking early can cause merchants to lose access to your app."
-    },
-    {
       "kind": "blocker",
-      "text": "Custom apps cannot use Shopify's app billing system to charge merchants.",
-      "status": "inferred",
+      "text": "Public apps must use expiring offline access tokens; non-expiring tokens will be blocked from API requests starting April 1, 2027.",
+      "status": "verified",
       "sourceIds": [
         "S6"
       ],
-      "quote": null
+      "quote": "Public apps that still use non-expiring offline access tokens are delisted and blocked from new installs on January 1, 2027. Their GraphQL Admin API and REST Admin API requests are rejected from April 1, 2027."
+    },
+    {
+      "kind": "review",
+      "text": "Submitting incomplete apps or apps with broken billing or installation flows will result in rejection and require resubmission.",
+      "status": "verified",
+      "sourceIds": [
+        "S5"
+      ],
+      "quote": "If you submit an app that is incomplete or has errors that prevent us from reviewing its features, then it won't be approved."
     }
   ],
   "unresolved": [
-    "Published review turnaround times for Shopify App Store submissions are not detailed in the retrieved documentation.",
-    "Exact pricing amount for the one-time Shopify App Store registration fee is not stated in the retrieved pages."
+    "What is the exact business day review timeline for Shopify app review submissions?"
   ],
   "nextActions": [
-    "Navigate to the Shopify Dev Dashboard and create your app entry.",
-    "Retrieve your Composio redirect URI from the Composio dashboard and save it in your app settings.",
-    "Add your Client ID and Client Secret to your Composio custom auth config.",
-    "If accessing customer information in production, submit API access requests for protected customer data in the Partner Dashboard."
+    "Create a Shopify Partner account and Dev Dashboard profile.",
+    "Register your Shopify app and obtain your Client ID and Client Secret.",
+    "Configure custom credentials in the Composio dashboard and link the redirect URI."
   ],
   "meta": {
     "query": "shopify",
-    "investigatedAt": "2026-11-10T20:39:58.036Z",
-    "model": "gemini/gemini-3.5-flash",
-    "durationMs": 557558,
+    "investigatedAt": "2026-11-11T08:15:24.919Z",
+    "model": "gemini/gemini-3.5-flash-lite",
+    "durationMs": 185310,
     "origin": "live"
   },
   "composio": {
@@ -330,7 +340,7 @@
       "title": "Shopify toolkit (Composio docs)",
       "kind": "composio",
       "authority": "composio",
-      "retrievedAt": "2026-11-10T20:30:42.547Z",
+      "retrievedAt": "2026-11-11T08:12:22.760Z",
       "chars": 1165,
       "truncated": false
     },
@@ -340,7 +350,7 @@
       "title": "Managed OAuth apps catalogue (Composio docs)",
       "kind": "composio",
       "authority": "composio",
-      "retrievedAt": "2026-11-10T20:30:41.232Z",
+      "retrievedAt": "2026-11-11T08:12:20.438Z",
       "chars": 1671,
       "truncated": true
     },
@@ -350,194 +360,199 @@
       "title": "Managed vs custom auth (Composio docs)",
       "kind": "composio",
       "authority": "composio",
-      "retrievedAt": "2026-11-10T20:30:43.035Z",
+      "retrievedAt": "2026-11-11T08:12:23.572Z",
       "chars": 4571,
       "truncated": false
     },
     {
       "id": "S4",
-      "url": "https://shopify.dev/docs/apps/build/authentication-authorization/authenticate-standalone-apps",
-      "title": "Authenticate a standalone or API-only app",
+      "url": "https://shopify.dev/docs/apps/build/authentication-authorization",
+      "title": "About app authentication",
       "kind": "provider_page",
       "authority": "official",
-      "retrievedAt": "2026-11-10T20:30:54.914Z",
-      "chars": 30000,
-      "truncated": true
+      "retrievedAt": "2026-11-11T08:14:34.014Z",
+      "chars": 13068,
+      "truncated": false
     },
     {
       "id": "S5",
-      "url": "https://shopify.dev/docs/apps/build",
-      "title": "Build apps for Shopify",
+      "url": "https://shopify.dev/docs/apps/launch/app-store-review/pass-app-review",
+      "title": "Pass app review",
       "kind": "provider_page",
       "authority": "official",
-      "retrievedAt": "2026-11-10T20:30:55.230Z",
-      "chars": 10009,
+      "retrievedAt": "2026-11-11T08:14:34.347Z",
+      "chars": 9705,
       "truncated": false
     },
     {
       "id": "S6",
-      "url": "https://shopify.dev/docs/apps/launch/distribution",
-      "title": "About app distribution",
+      "url": "https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens",
+      "title": "Access tokens",
       "kind": "provider_page",
       "authority": "official",
-      "retrievedAt": "2026-11-10T20:30:59.145Z",
-      "chars": 5483,
+      "retrievedAt": "2026-11-11T08:14:34.654Z",
+      "chars": 22728,
       "truncated": false
     },
     {
       "id": "S7",
-      "url": "https://shopify.dev/docs/apps/build/authentication-authorization/manage-credentials",
-      "title": "Manage your app credentials",
+      "url": "https://shopify.dev/docs/apps/launch/shopify-app-store/app-store-requirements",
+      "title": "App Store requirements",
       "kind": "provider_page",
       "authority": "official",
-      "retrievedAt": "2026-11-10T20:30:59.421Z",
-      "chars": 15045,
-      "truncated": false
-    },
-    {
-      "id": "S8",
-      "url": "https://shopify.dev/docs/apps/launch/protected-customer-data",
-      "title": "Work with protected customer data",
-      "kind": "provider_page",
-      "authority": "official",
-      "retrievedAt": "2026-11-10T20:30:59.450Z",
-      "chars": 17213,
-      "truncated": false
-    },
-    {
-      "id": "S9",
-      "url": "https://shopify.dev/docs/apps/launch/app-store-review",
-      "title": "About the Shopify App Store",
-      "kind": "provider_page",
-      "authority": "official",
-      "retrievedAt": "2026-11-10T20:30:59.508Z",
-      "chars": 3905,
-      "truncated": false
-    },
-    {
-      "id": "S10",
-      "url": "https://shopify.dev/docs/apps/launch/app-store-review/review-process",
-      "title": "About the app review process",
-      "kind": "provider_page",
-      "authority": "official",
-      "retrievedAt": "2026-11-10T20:31:03.229Z",
-      "chars": 3167,
-      "truncated": false
-    },
-    {
-      "id": "S11",
-      "url": "https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration",
-      "title": "App configuration",
-      "kind": "provider_page",
-      "authority": "official",
-      "retrievedAt": "2026-11-10T20:31:03.547Z",
-      "chars": 25237,
-      "truncated": false
+      "retrievedAt": "2026-11-11T08:14:34.805Z",
+      "chars": 30000,
+      "truncated": true
     }
   ],
   "log": {
     "searches": [
       {
-        "query": "shopify dev docs oauth app registration redirect uri client secret scopes",
-        "results": []
+        "query": "shopify dev oauth app registration redirect uri scopes review process",
+        "results": [
+          {
+            "url": "https://community.shopify.com/t/oauth-authorization-url-for-shopify-app-development/316049",
+            "title": "OAuth Authorization URL for Shopify app development"
+          },
+          {
+            "url": "https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes",
+            "title": "Manage access scopes - Shopify Developers Platform"
+          },
+          {
+            "url": "https://www.apideck.com/blog/how-to-create-a-shopify-public-oauth-app",
+            "title": "How to Create a Shopify Public OAuth App - apideck.com"
+          },
+          {
+            "url": "https://shopify.dev/docs/apps/build/authentication-authorization",
+            "title": "About app authentication - Shopify Developers Platform"
+          },
+          {
+            "url": "https://softwarehouse.au/blog/authenticating-app-requests-with-oauth-2-0-in-shopify/",
+            "title": "Shopify OAuth 2.0: Authenticate App Requests Securely"
+          },
+          {
+            "url": "https://xapplets.com/documentation/shopify/shopify-oauth-setup/",
+            "title": "Shopify OAuth 2.0 Setup: App Creation, Authorization Process"
+          },
+          {
+            "url": "https://community.shopify.com/t/updating-oauth-callback-redirect-urls-in-shopify-app/566922",
+            "title": "Updating OAuth Callback Redirect URLs in Shopify App"
+          },
+          {
+            "url": "https://doshopy.com/blog/how-to-build-a-shopify-app-using-oauth-and-webhooks",
+            "title": "How to build a Shopify app using OAuth and webhooks"
+          }
+        ]
+      },
+      {
+        "query": "site:shopify.dev/docs/apps \"Partner Dashboard\" \"redirect\" scopes app review",
+        "results": [
+          {
+            "url": "https://shopify.dev/docs/apps/launch/app-store-review/pass-app-review",
+            "title": "Pass app review"
+          },
+          {
+            "url": "https://shopify.dev/docs/apps/build/authentication-authorization/app-installation/manage-access-scopes",
+            "title": "Manage access scopes"
+          },
+          {
+            "url": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing",
+            "title": "Shopify App Pricing"
+          },
+          {
+            "url": "https://shopify.dev/docs/apps/build/authentication-authorization/manage-access-scopes.md",
+            "title": "--- title: Manage access scopes description: >-"
+          },
+          {
+            "url": "https://shopify.dev/docs/apps/launch/shopify-app-store/app-store-requirements",
+            "title": "App Store requirements"
+          },
+          {
+            "url": "https://shopify.dev/docs/apps/build/purchase-options/subscriptions/build-subscription-contract",
+            "title": "Build a subscription contract"
+          },
+          {
+            "url": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/migrating-to-shopify-app-pricing",
+            "title": "Migrate to Shopify App Pricing"
+          },
+          {
+            "url": "https://shopify.dev/docs/apps/launch/billing/shopify-app-pricing/subscription-billing/build-billing-event",
+            "title": "Build a Billing Event"
+          }
+        ]
       }
     ],
     "fetches": [
       {
-        "url": "https://shopify.dev/docs/apps/build/authentication-authorization/access-scopes",
-        "ok": false,
-        "sourceId": null,
-        "detail": "HTTP 404"
-      },
-      {
-        "url": "https://shopify.dev/docs/apps/build/authentication-authorization/authenticate-standalone-apps",
+        "url": "https://shopify.dev/docs/apps/build/authentication-authorization",
         "ok": true,
         "sourceId": "S4",
-        "detail": "30,000 characters read (truncated at 30,000)"
+        "detail": "13,068 characters read"
       },
       {
-        "url": "https://shopify.dev/docs/apps/build",
+        "url": "https://shopify.dev/docs/apps/launch/app-store-review/pass-app-review",
         "ok": true,
         "sourceId": "S5",
-        "detail": "10,009 characters read"
+        "detail": "9,705 characters read"
       },
       {
-        "url": "https://shopify.dev/docs/apps/launch/distribution",
+        "url": "https://shopify.dev/docs/apps/build/authentication-authorization/access-tokens",
         "ok": true,
         "sourceId": "S6",
-        "detail": "5,483 characters read"
+        "detail": "22,728 characters read"
       },
       {
-        "url": "https://shopify.dev/docs/apps/build/authentication-authorization/manage-credentials",
+        "url": "https://shopify.dev/docs/apps/launch/shopify-app-store/app-store-requirements",
         "ok": true,
         "sourceId": "S7",
-        "detail": "15,045 characters read"
-      },
-      {
-        "url": "https://shopify.dev/docs/apps/launch/protected-customer-data",
-        "ok": true,
-        "sourceId": "S8",
-        "detail": "17,213 characters read"
-      },
-      {
-        "url": "https://shopify.dev/docs/apps/launch/app-store-review",
-        "ok": true,
-        "sourceId": "S9",
-        "detail": "3,905 characters read"
-      },
-      {
-        "url": "https://shopify.dev/docs/apps/launch/app-store-review/review-process",
-        "ok": true,
-        "sourceId": "S10",
-        "detail": "3,167 characters read"
-      },
-      {
-        "url": "https://shopify.dev/docs/apps/build/cli-for-apps/app-configuration",
-        "ok": true,
-        "sourceId": "S11",
-        "detail": "25,237 characters read"
+        "detail": "30,000 characters read (truncated at 30,000)"
       }
     ]
   },
   "validation": {
     "adjustments": [
       {
-        "path": "authMethod",
+        "path": "externalReview.triggers[1]",
         "change": "verified → inferred",
-        "reason": "the quoted text was not found in the cited page"
+        "reason": "the quoted text was not found in the cited page: \"If your app uses customer data, then you need to meet the protected customer data requirements and then apply for access to this data in the API access requests…\""
       },
       {
-        "path": "externalReview.summary",
-        "change": "corrected citation",
-        "reason": "quote was found in S5, not in the page cited"
-      },
-      {
-        "path": "externalReview.triggers[0]",
+        "path": "prerequisites[0]",
         "change": "verified → inferred",
-        "reason": "the quoted text was not found in the cited page"
+        "reason": "the quoted text was not found in the cited page: \"1. Log in to your Dev Dashboard.\""
       },
       {
-        "path": "redirectRules[1]",
+        "path": "steps[1]",
         "change": "verified → inferred",
-        "reason": "the quoted text was not found in the cited page"
+        "reason": "the quoted text was not found in the cited page: \"1. Log in to your Dev Dashboard. 2. Click Apps. 3. Click the name of your app to navigate to the App overview page.\""
       },
       {
-        "path": "risks[3]",
+        "path": "steps[6]",
         "change": "verified → inferred",
-        "reason": "the quoted text was not found in the cited page"
+        "reason": "the quoted text was not found in the cited page: \"4. On the app overview page, in the Installs section, click Install app. 5. Select the development store you wish to use.\""
       },
       {
-        "path": "steps[4].actor",
-        "change": "agent can prepare → agent assists",
-        "reason": "the step is performed inside a logged-in dashboard or console (rule applied to the saved guide after the run)"
+        "path": "prerequisites[0]",
+        "change": "inferred → verified",
+        "reason": "re-checked on 2026-11-11 after a quote-matching fix: the quote is in S5 (page retrieved again on that date)"
+      },
+      {
+        "path": "steps[1]",
+        "change": "inferred → verified",
+        "reason": "re-checked on 2026-11-11 after a quote-matching fix: the quote is in S5 (page retrieved again on that date)"
+      },
+      {
+        "path": "steps[6]",
+        "change": "inferred → verified",
+        "reason": "re-checked on 2026-11-11 after a quote-matching fix: the quote is in S5 (page retrieved again on that date)"
       }
     ],
     "counts": {
-      "verified": 13,
-      "inferred": 5,
+      "verified": 16,
+      "inferred": 2,
       "unknown": 1
     },
     "thirdPartyOnly": [],
-    "officialPagesRead": 8
+    "officialPagesRead": 4
   }
 }

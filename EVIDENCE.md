@@ -57,10 +57,10 @@ for most queries (see section 4), so most pages were fetched from URLs the model
 
 | Provider | Model used | Official pages read | Claims (verified / inferred / unknown) | Validator adjustments |
 |---|---|---|---|---|
-| GitHub | gemini-3.1-flash-lite | 2 | 8 / 4 / 1 | 2 |
+| GitHub (re-run) | gemini-3.6-flash | 4 | 13 / 1 / 1 | 6 |
 | Gmail | gemini-3.1-flash-lite | 5 | 13 / 2 / 0 | 2 |
 | Slack | gemini-3.5-flash-lite | 4 | 12 / 3 / 1 | 4 |
-| Shopify | gemini-3.5-flash | 8 | 13 / 5 / 1 | 6 |
+| Shopify (re-run) | gemini-3.6-flash, then 3.5-flash-lite | 4 | 16 / 2 / 1 | 7 |
 
 Where the pipeline and the independent check agree:
 
@@ -85,11 +85,19 @@ Where the pipeline fell short of the independent check:
   retrieved documentation" for this reason, but the gap is real: the page budget is small.
 - **Slack's 2025 rate limits for non-Marketplace apps** (1 request a minute on `conversations.history`
   for commercially distributed apps) are missing from the guide for the same reason.
-- **GitHub** read only two pages. That run predates the second research pass, which now fires when
-  fewer than three provider pages are read. It also missed organisation OAuth app access
-  restrictions, which the independent check found.
-- **Shopify** has five steps and no explicit scope-configuration step. That run predates the
-  instruction to cover the whole path from account to first connection; Slack's later run has seven steps.
+- **GitHub** still does not mention organisation OAuth app access restrictions, which the independent
+  check found (new organisations block OAuth apps until an owner approves them).
+- **Shopify's re-run read fewer pages than its first run** (4 against 8). It gained the full path
+  (8 steps, including a development-store test and review submission) and a new verified blocker
+  (public apps must move to expiring offline tokens), but lost the protected-customer-data and
+  secret-rotation risks the first run had. Its first step, "Create a Shopify Partner Account", is
+  marked *inferred*, and Shopify's Dev Dashboard page says the opposite ("You don't need a Partner
+  organization to use the Dev Dashboard"). The label did its job; the step is still wrong.
+
+**Run-to-run variance.** GitHub and Shopify were each run twice (10 and 11 November). Facts quoted
+from pages were stable. The judgement fields were not: Shopify's difficulty went from medium to
+high and its effort estimate from 15-30 minutes to 2-4 hours. Effort is labelled as the tool's own
+estimate for this reason; a fixed rubric would make it steadier.
 
 ## 3. Hands-on attempts
 
@@ -145,8 +153,7 @@ same pages):
     The app now falls back across five Flash models and keeps unfinished research for reuse.
 11. **The quote validator had a false negative.** GitHub's "In the left sidebar, click OAuth apps.
     Click New OAuth App." was rejected because the page has the list number "4." between the two
-    steps. Quote matching now ignores list numbers. The saved GitHub guide predates the fix and still
-    shows that downgrade.
+    steps. Quote matching now ignores list numbers. The GitHub guide was later re-run (see 17).
 12. **A duration slipped past the validator.** Gmail's timeline was marked verified with the text
     "brand verification typically takes 2-3 days … restricted reviews can take several weeks", but the
     quote only supported "several weeks". The validator now requires every duration in the text to
@@ -163,6 +170,13 @@ same pages):
     When I tried a similar disguise to check why Xero's docs return an empty page, the permission
     system blocked it as bot-check circumvention. That was right, and it applied equally to the
     search tool, which now identifies itself honestly.
+17. **Two more quote-matching false negatives**, found by re-running GitHub and Shopify. The model
+    wrote `In Application name, type…` where GitHub's page has `In "Application name", type…`, and
+    `ID to authConfigs, keyed` where Composio's page has `` `authConfigs`, ``. Quote marks, apostrophes
+    and code markers are now ignored on both sides, as are spaces left before punctuation. Six
+    downgrades in the two re-run guides were matcher errors. `scripts/recheck-quotes.ts` re-retrieved
+    the cited pages, found each full quote, restored the claims, and recorded each restoration with
+    its date. It restored nothing in the Gmail and Slack guides, where the rejections stand.
 16. **The saved Shopify guide recorded the wrong model** (`gemini-3.8-flash`) because an early version
     recorded the model before fallback; that run's log shows `gemini-3.5-flash`. The file was corrected.
 
@@ -198,3 +212,5 @@ https://oauth-fieldguide.onrender.com. Checked against production, not localhost
   with its retrieval time, and every validator adjustment with its reason.
 - `npx tsx scripts/recheck-saved.ts` applies the validator rules that need only the guide itself
   to saved guides, and records each change as applied afterwards.
+- `npx tsx scripts/recheck-quotes.ts [--write]` re-checks downgraded quotes in saved guides against
+  freshly retrieved pages after a matcher change, and records any restoration.

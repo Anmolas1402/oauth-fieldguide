@@ -17,6 +17,14 @@ describe("quoteFound", () => {
     expect(quoteFound("In the left sidebar, click OAuth apps. Click New OAuth App.", steps)).toBe(true);
     expect(quoteFound("Version 2.0 of the protocol is required.", "Version 2.0 of the protocol is required.")).toBe(true);
   });
+  it("ignores quote marks and code markers the model dropped or kept", () => {
+    const gh = ' 5.  In "Application name", type the name of your app.\n';
+    expect(quoteFound("In Application name, type the name of your app.", gh)).toBe(true);
+    const composio = "A session uses your config only when you pass its ID to `authConfigs`, keyed by toolkit.";
+    expect(quoteFound("A session uses your config only when you pass its ID to authConfigs, keyed by toolkit.", composio)).toBe(true);
+    expect(quoteFound("Open your Dev Dashboard.", "1. Log in to your Dev Dashboard [https://dev.shopify.com/dashboard].")).toBe(false);
+    expect(quoteFound("Log in to your Dev Dashboard.", "1. Log in to your Dev Dashboard [https://dev.shopify.com/dashboard].")).toBe(true);
+  });
   it("accepts an elided quote only when each excerpt appears in order", () => {
     expect(quoteFound("Redirect URIs must use HTTPS … The client secret is shown only once.", page)).toBe(true);
     expect(quoteFound("The client secret is shown only once. … Redirect URIs must use HTTPS", page)).toBe(false);
