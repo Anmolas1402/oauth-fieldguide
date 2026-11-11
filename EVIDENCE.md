@@ -170,6 +170,8 @@ same pages):
     When I tried a similar disguise to check why Xero's docs return an empty page, the permission
     system blocked it as bot-check circumvention. That was right, and it applied equally to the
     search tool, which now identifies itself honestly.
+16. **The saved Shopify guide recorded the wrong model** (`gemini-3.8-flash`) because an early version
+    recorded the model before fallback; that run's log shows `gemini-3.5-flash`. The file was corrected.
 17. **Two more quote-matching false negatives**, found by re-running GitHub and Shopify. The model
     wrote `In Application name, type…` where GitHub's page has `In "Application name", type…`, and
     `ID to authConfigs, keyed` where Composio's page has `` `authConfigs`, ``. Quote marks, apostrophes
@@ -177,8 +179,6 @@ same pages):
     downgrades in the two re-run guides were matcher errors. `scripts/recheck-quotes.ts` re-retrieved
     the cited pages, found each full quote, restored the claims, and recorded each restoration with
     its date. It restored nothing in the Gmail and Slack guides, where the rejections stand.
-16. **The saved Shopify guide recorded the wrong model** (`gemini-3.8-flash`) because an early version
-    recorded the model before fallback; that run's log shows `gemini-3.5-flash`. The file was corrected.
 
 ## 5. Deployment check
 
