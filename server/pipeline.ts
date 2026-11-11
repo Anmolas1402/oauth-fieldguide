@@ -150,7 +150,6 @@ export async function investigate(
       );
     }
     const llm = getLLM();
-    const model = `${llm.provider}/${llm.model}`;
     const research = await runResearch({
       llm,
       providerName,
@@ -162,7 +161,8 @@ export async function investigate(
     });
     const pages = research.ledger.filter((s) => s.kind === "provider_page").length;
     const failed = research.log.fetches.filter((f) => !f.ok).length;
-    done("research", `${research.log.searches.length} searches, ${pages} pages read${failed ? `, ${failed} could not be retrieved` : ""}`);
+    const skipped = llm.skippedModels?.length ? `; used ${llm.model} because ${llm.skippedModels.join(", ")} was unavailable` : "";
+    done("research", `${research.log.searches.length} searches, ${pages} pages read${failed ? `, ${failed} could not be retrieved` : ""}${skipped}`);
 
     // 4. Compose the structured guide.
     begin("compose");
@@ -177,7 +177,7 @@ export async function investigate(
       steps: checked.steps,
       scopes: checked.scopes,
       console: checked.console,
-      meta: { query, investigatedAt: now(), model, durationMs: Date.now() - started, origin: "live" },
+      meta: { query, investigatedAt: now(), model: `${llm.provider}/${llm.model}`, durationMs: Date.now() - started, origin: "live" },
       composio: facts,
       sources: research.ledger.map(toPublicSource),
       log: research.log,

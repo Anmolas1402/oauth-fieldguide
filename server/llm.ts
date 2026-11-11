@@ -41,7 +41,10 @@ export type JsonOptions = {
 
 export interface LLM {
   provider: "gemini" | "anthropic";
-  model: string;
+  /** The model currently in use (it can change if an overloaded model is skipped). */
+  readonly model: string;
+  /** Models that were skipped because they were overloaded or out of quota. */
+  readonly skippedModels?: string[];
   toolLoop(opts: ToolLoopOptions): Promise<ToolLoopResult>;
   /** Returns the raw JSON text; the caller validates it. */
   json(opts: JsonOptions): Promise<string>;
@@ -60,6 +63,8 @@ export class ModelStopError extends Error {
 // Provider selection. Keys are read from the server environment only and never reach the browser.
 
 export const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash";
+/** Tried in order when GEMINI_MODEL is not set. Free-tier models are often overloaded (503). */
+export const GEMINI_FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash"];
 export const DEFAULT_ANTHROPIC_MODEL = "claude-opus-5-5";
 
 const env = (k: string) => process.env[k]?.trim() || "";
@@ -85,16 +90,12 @@ export function modelName(): string | null {
   return null;
 }
 
-let cached: { key: string; llm: LLM } | null = null;
+/** A fresh driver per investigation, so model fallback state does not carry over between runs. */
 export function getLLM(): LLM {
   const p = activeProvider();
   const model = modelName();
   if (!p || !model) throw new Error("No model API key is configured.");
-  const cacheKey = `${p}:${model}`;
-  if (cached?.key === cacheKey) return cached.llm;
-  const llm = p === "gemini" ? geminiDriver(model) : anthropicDriver(model);
-  cached = { key: cacheKey, llm };
-  return llm;
+  return p === "gemini" ? geminiDriver(model) : anthropicDriver(model);
 }
 
 // ---------------------------------------------------------------------------------------------
@@ -107,9 +108,37 @@ function geminiThinking(fallback: ThinkingLevel): ThinkingLevel {
   return (Object.values(ThinkingLevel) as string[]).includes(v) ? (v as ThinkingLevel) : fallback;
 }
 
-export function geminiDriver(model: string, client?: GoogleGenAI): LLM {
-  // Retries cover the free tier's 429s and transient 503s.
-  const ai = client ?? new GoogleGenAI({ apiKey: geminiKey(), httpOptions: { retryOptions: { attempts: 4, initialDelay: 4 } } });
+export function geminiDriver(model: string, client?: GoogleGenAI, candidates?: string[]): LLM {
+  // Few SDK retries: an overloaded model is better answered by moving to the next candidate.
+  const ai = client ?? new GoogleGenAI({ apiKey: geminiKey(), httpOptions: { retryOptions: { attempts: 1 } } });
+  const models = candidates ?? (env("GEMINI_MODEL") ? [model] : GEMINI_FALLBACK_MODELS);
+  let current = 0;
+  const skipped: string[] = [];
+
+  /** Calls the current model; on overload, quota or missing model, moves on and stays on the one that answered. */
+  const generate = async (params: Omit<Parameters<typeof ai.models.generateContent>[0], "model">) => {
+    let lastModelRetries = 0;
+    for (;;) {
+      try {
+        return await ai.models.generateContent({ ...params, model: models[current] });
+      } catch (err) {
+        const status = err instanceof ApiError ? err.status : undefined;
+        const transient = status === 503 || status === 429 || status === 500;
+        if (params.config?.abortSignal?.aborted) throw err;
+        if ((transient || status === 404) && current < models.length - 1) {
+          skipped.push(`${models[current]} (HTTP ${status})`);
+          current++;
+          continue;
+        }
+        if (transient && lastModelRetries < 2) {
+          lastModelRetries++;
+          await new Promise((r) => setTimeout(r, 4000 * lastModelRetries));
+          continue;
+        }
+        throw err;
+      }
+    }
+  };
 
   const checkStop = (res: { candidates?: { finishReason?: string; content?: Content }[]; promptFeedback?: { blockReason?: string } }) => {
     if (res.promptFeedback?.blockReason) {
@@ -124,14 +153,18 @@ export function geminiDriver(model: string, client?: GoogleGenAI): LLM {
 
   return {
     provider: "gemini",
-    model,
+    get model() {
+      return models[current];
+    },
+    get skippedModels() {
+      return [...skipped];
+    },
     async toolLoop(opts) {
       const contents: Content[] = [{ role: "user", parts: [{ text: opts.user }] }];
       const functionDeclarations = opts.tools.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.parameters }));
       let text = "";
       for (let turn = 1; turn <= opts.maxTurns; turn++) {
-        const res = await ai.models.generateContent({
-          model,
+        const res = await generate({
           contents,
           config: {
             systemInstruction: opts.system,
@@ -172,8 +205,7 @@ export function geminiDriver(model: string, client?: GoogleGenAI): LLM {
     },
     async json(opts) {
       const request = (withSchema: boolean) =>
-        ai.models.generateContent({
-          model,
+        generate({
           contents: [{ role: "user", parts: [{ text: opts.user }] }],
           config: {
             systemInstruction: opts.system,

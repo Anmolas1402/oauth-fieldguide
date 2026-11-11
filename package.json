@@ -7,7 +7,8 @@
     "start": "NODE_ENV=production tsx server/node.ts",
     "test": "vitest run",
     "typecheck": "tsc --noEmit",
-    "save-guide": "tsx scripts/save-guide.ts"
+    "save-guide": "tsx scripts/save-guide.ts",
+    "check-model": "tsx scripts/check-model.ts"
   },
   "description": "Investigates what it takes to register an OAuth app with a provider and writes an evidence-grounded setup guide.",
   "dependencies": {
