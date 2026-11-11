@@ -20,8 +20,10 @@ npm install
 cp .env.example .env.local
 ```
 
-Put your Anthropic API key in `.env.local` as `ANTHROPIC_API_KEY=...`. The file is gitignored. The key
-is read only by the server process and is never sent to the browser.
+Put a model key in `.env.local`. A free Google Gemini key works: create one at
+https://aistudio.google.com/apikey and set `GEMINI_API_KEY=...`. An Anthropic key
+(`ANTHROPIC_API_KEY`) also works. The file is gitignored, and the key is read only by the server
+process and never sent to the browser. No search API key is needed.
 
 ```bash
 npm run dev
@@ -79,12 +81,20 @@ browser ── POST /api/investigate ──> server (Hono, Node)
   `docs.composio.dev/toolkits/managed-auth.md` and `docs.composio.dev/toolkits/<slug>.md`, which are
   public. The managed / bring-your-own answer in the guide comes only from this data; the model is
   told not to contradict it and has no field to write it in.
-- **Stage 3 is an agent loop** (`server/research.ts`). The model searches with Anthropic's web search
-  tool and reads pages through `fetch_page`, a tool this server executes (`server/fetchPage.ts`):
-  https only, public hosts only, redirects re-checked, 30,000 characters per page, at most 9 pages
-  and 6 searches. The server keeps the text of every page it retrieved.
+- **Stage 3 is an agent loop** (`server/research.ts`). The model has two tools, and the server
+  executes both:
+  - `search_web` (`server/search.ts`) reads the public HTML results pages of DuckDuckGo, then Brave
+    Search, so no search key is needed. A bot-check page counts as a failure (not "no results"), the
+    blocking engine is skipped for 10 minutes, and every failure is shown in the progress view and log.
+  - `fetch_page` (`server/fetchPage.ts`): https only, public hosts only, redirects re-checked, 30,000
+    characters per page.
+  Budgets: at most 6 searches, 9 pages, 10 model turns. The server keeps the text of every page it
+  retrieved. If search is blocked, the model is told to fetch official documentation URLs directly.
+- **The model is behind a small driver** (`server/llm.ts`): Gemini (`gemini-3.8-flash` by default)
+  or Claude. Both get the same tools and prompts.
 - **Stage 4** (`server/compose.ts`) gets those page texts and the research notes and must return JSON
-  matching `GuideDraftSchema` in `shared/schema.ts`. Sources can only be cited by the ids the server
+  matching `GuideDraftSchema` in `shared/schema.ts` (sent to the model as JSON Schema, then validated
+  with Zod; one retry with the validation error, then it fails rather than show an invalid guide). Sources can only be cited by the ids the server
   assigned, so a URL that was not retrieved cannot appear as a source.
 - **Stage 5** (`server/verify.ts`) is plain code:
   - a "verified" claim needs a cited, retrieved page and a quote found in that page's text, otherwise
@@ -109,10 +119,14 @@ evidence/  the independent documentation check behind EVIDENCE.md
 
 | Variable | Required | Default | Purpose |
 |---|---|---|---|
-| `ANTHROPIC_API_KEY` | for live research | none | Model, web search |
-| `ANTHROPIC_MODEL` | no | `claude-opus-5-5` | Model for research and guide writing |
+| `GEMINI_API_KEY` | one model key | none | Google Gemini key (free tier works) |
+| `GEMINI_MODEL` | no | `gemini-3.8-flash` | Gemini model |
+| `GEMINI_THINKING` | no | LOW for research, MEDIUM for writing | `MINIMAL`, `LOW`, `MEDIUM` or `HIGH` |
+| `ANTHROPIC_API_KEY` | one model key | none | Used when no Gemini key is set |
+| `ANTHROPIC_MODEL` | no | `claude-opus-5-5` | Claude model |
 | `ANTHROPIC_EFFORT` | no | `medium` | Reasoning effort |
-| `ANTHROPIC_FALLBACKS` | no | on | Set to `off` to disable server-side refusal fallback |
+| `ANTHROPIC_FALLBACKS` | no | on | `off` disables server-side refusal fallback |
+| `MODEL_PROVIDER` | no | auto | `gemini` or `anthropic`, when both keys are set |
 | `PORT` | no | `8787` | Production server port |
 | `API_PORT` | no | `8787` | API port in `npm run dev` |
 | `RATE_LIMIT_PER_HOUR` | no | `6` | Live investigations per IP per hour |
@@ -125,11 +139,17 @@ No Composio key is needed. No provider OAuth credentials are used anywhere.
 The app is one Node process (`npm start`) that serves the API and the built client. It needs a host
 that allows a streaming response to stay open for a few minutes.
 
-- **Render:** `render.yaml` is included. New > Blueprint, pick the repo, set `ANTHROPIC_API_KEY`.
+- **Render:** `render.yaml` is included. New > Blueprint, pick the repo, set `GEMINI_API_KEY` (or `ANTHROPIC_API_KEY`).
 - **Anything that runs a container:** `Dockerfile` is included (listens on `$PORT`, default 8080).
 
 ## Limitations
 
+- **Search depends on public results pages.** DuckDuckGo and Brave both block automated requests
+  some of the time. When both are blocked the investigation continues by fetching documentation
+  URLs the model proposes, and the log says search failed. A search API would be more reliable;
+  it was left out so the app runs with one free key.
+- **The free Gemini tier has a daily request quota.** One investigation uses roughly 5 to 12 model
+  calls. When the quota runs out the UI says so; it resets at midnight Pacific time.
 - **Pages that need JavaScript or a login cannot be read.** The fetcher gets server-rendered HTML
   only. Such pages show up in the log as failed, and claims that depended on them stay unverified.
 - **"Verified" means "a retrieved page says this", not "this was tested in the provider's console".**
