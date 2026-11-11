@@ -2,6 +2,10 @@
 
 Know what it takes to launch an OAuth integration before you start building it.
 
+**Live:** https://oauth-fieldguide.onrender.com (free Render instance: the first visit after a quiet
+spell can take up to a minute while it wakes up. The four examples open saved runs instantly; any
+other provider name runs a live investigation.)
+
 Type a provider name. Fieldguide checks Composio's live toolkit data to see whether a
 Composio-managed OAuth app exists or you must register your own, then searches for and reads the
 provider's own documentation and writes a setup guide. Every claim in the guide is labelled
@@ -151,7 +155,10 @@ No Composio key is needed. No provider OAuth credentials are used anywhere.
 The app is one Node process (`npm start`) that serves the API and the built client. It needs a host
 that allows a streaming response to stay open for a few minutes.
 
-- **Render:** `render.yaml` is included. New > Blueprint, pick the repo, set `GEMINI_API_KEY` (or `ANTHROPIC_API_KEY`).
+- **Render:** `render.yaml` is included and is what runs the live site. New > Blueprint, pick the
+  repo, and set `GEMINI_API_KEY` (or `ANTHROPIC_API_KEY`). Render skips an optional secret that is
+  left empty in the Blueprint form, so if `/api/health` reports `"liveResearch": false`, add the key
+  under the service's Environment settings.
 - **Anything that runs a container:** `Dockerfile` is included (listens on `$PORT`, default 8080).
 
 ## Limitations

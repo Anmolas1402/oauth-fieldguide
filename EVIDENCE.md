@@ -166,7 +166,20 @@ same pages):
 16. **The saved Shopify guide recorded the wrong model** (`gemini-3.8-flash`) because an early version
     recorded the model before fallback; that run's log shows `gemini-3.5-flash`. The file was corrected.
 
-## 5. Still uncertain
+## 5. Deployment check
+
+Deployed to Render (free plan) from `render.yaml` on 11 November 2026:
+https://oauth-fieldguide.onrender.com. Checked against production, not localhost:
+
+- `/api/health` reports live research on; the page, the four saved guides and input validation
+  (HTTP 400 on a one-character query) all respond as they do locally.
+- A live investigation of **Zoom**, a provider that is not an example, streamed from production in
+  64 seconds: Composio lookup (managed app available), one search (Brave answered from Render's
+  network), six official `developers.zoom.us` pages read, a 6-step guide with 12 verified,
+  5 inferred and 1 unknown claims, and 5 validator adjustments. It ran on `gemini-3.5-flash-lite`
+  because the three larger models were overloaded or out of their daily quota.
+
+## 6. Still uncertain
 
 - **Xero.** `developer.xero.com/documentation/...` returns 39 characters to this tool, so Xero's main
   docs could not be read. The second Xero run read Xero's FAQ pages and its official Python SDK
@@ -178,7 +191,7 @@ same pages):
 - **Slack's dates for applying the new rate limits to existing non-Marketplace installs.** A search
   snippet claimed 3 March 2026; the changelog pages fetched do not say it.
 
-## 6. How to reproduce
+## 7. How to reproduce
 
 - `npm run save-guide -- <provider>` runs the pipeline and prints every stage, search and page.
 - Each saved guide contains its own investigation log (`log.searches`, `log.fetches`), every source
