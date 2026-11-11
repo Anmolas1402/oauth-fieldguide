@@ -3,7 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { GuideSchema, type Guide, type PipelineEvent } from "../shared/schema.ts";
-import { hasModelCredentials, modelName } from "./model.ts";
+import { hasModelCredentials, modelName } from "./llm.ts";
 import { investigate } from "./pipeline.ts";
 import { key } from "./resolve.ts";
 

@@ -1,4 +1,3 @@
-import Anthropic from "@anthropic-ai/sdk";
 import type { ComposioFacts, Guide, NoOAuthResult, PipelineEvent, Source, StageId } from "../shared/schema.ts";
 import { GuideSchema } from "../shared/schema.ts";
 import {
@@ -12,7 +11,7 @@ import {
   type ToolkitHead,
 } from "./composio.ts";
 import { composeGuide } from "./compose.ts";
-import { getClient, hasModelCredentials, modelName } from "./model.ts";
+import { describeModelError, getLLM, hasModelCredentials } from "./llm.ts";
 import { PipelineError, runResearch, type LedgerSource } from "./research.ts";
 import { resolveProvider } from "./resolve.ts";
 import { verifyDraft } from "./verify.ts";
@@ -147,14 +146,13 @@ export async function investigate(
     if (!hasModelCredentials()) {
       throw new PipelineError(
         "no_model_key",
-        "This server has no ANTHROPIC_API_KEY, so the research and guide-writing stages cannot run. The Composio lookup above is real; nothing beyond it was generated.",
+        "This server has no model API key (GEMINI_API_KEY or ANTHROPIC_API_KEY), so the research and guide-writing stages cannot run. The Composio lookup above is real; nothing beyond it was generated.",
       );
     }
-    const client = getClient();
-    const model = modelName();
+    const llm = getLLM();
+    const model = `${llm.provider}/${llm.model}`;
     const research = await runResearch({
-      client,
-      model,
+      llm,
       providerName,
       query,
       composio: facts,
@@ -168,7 +166,7 @@ export async function investigate(
 
     // 4. Compose the structured guide.
     begin("compose");
-    const draft = await composeGuide({ client, model, providerName, query, composio: facts, notes: research.notes, ledger: research.ledger, signal });
+    const draft = await composeGuide({ llm, providerName, query, composio: facts, notes: research.notes, ledger: research.ledger, signal });
     done("compose", `${draft.steps.length} setup steps drafted`);
 
     // 5. Cross-check every claim against the retrieved text.
@@ -199,18 +197,8 @@ export async function investigate(
 
 export function describeError(err: unknown): { code: string; message: string } {
   if (err instanceof PipelineError) return { code: err.code, message: err.message };
-  if (err instanceof Anthropic.AuthenticationError)
-    return { code: "model_auth", message: "The model API rejected the server's API key. Check ANTHROPIC_API_KEY on the server." };
-  if (err instanceof Anthropic.PermissionDeniedError)
-    return { code: "model_permission", message: "The server's API key is not allowed to use this model or the web search tool." };
-  if (err instanceof Anthropic.RateLimitError)
-    return { code: "model_rate_limit", message: "The model API is rate limiting this server. Try again in a minute." };
-  if (err instanceof Anthropic.APIConnectionTimeoutError)
-    return { code: "model_timeout", message: "The model API timed out." };
-  if (err instanceof Anthropic.APIConnectionError)
-    return { code: "model_network", message: "Could not reach the model API from the server." };
-  if (err instanceof Anthropic.APIError)
-    return { code: "model_error", message: `The model API returned an error (HTTP ${err.status ?? "?"}): ${String(err.message).slice(0, 240)}` };
+  const model = describeModelError(err);
+  if (model) return model;
   if (err instanceof Error && (err.name === "AbortError" || err.name === "TimeoutError"))
     return { code: "aborted", message: "The investigation was cancelled or timed out." };
   return { code: "internal", message: err instanceof Error ? err.message.slice(0, 240) : "Unexpected error." };

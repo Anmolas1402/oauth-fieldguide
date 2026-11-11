@@ -5,7 +5,7 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { createApp } from "./app.ts";
-import { hasModelCredentials, modelName } from "./model.ts";
+import { hasModelCredentials, modelName } from "./llm.ts";
 
 // .env.local (gitignored) takes precedence over .env for local development.
 config({ path: ".env.local", override: true, quiet: true });
@@ -25,6 +25,6 @@ serve({ fetch: app.fetch, port }, () => {
   console.log(
     hasModelCredentials()
       ? `Live research enabled (model: ${modelName()})`
-      : "ANTHROPIC_API_KEY is not set: Composio lookups work, live research is disabled",
+      : "No GEMINI_API_KEY or ANTHROPIC_API_KEY: Composio lookups work, live research is disabled",
   );
 });
