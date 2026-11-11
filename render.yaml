@@ -1,0 +1,14 @@
+# Render blueprint: one Node web service that serves the API and the built client.
+services:
+  - type: web
+    name: oauth-fieldguide
+    runtime: node
+    plan: free
+    buildCommand: npm ci && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_VERSION
+        value: "20.19.0"
+      - key: ANTHROPIC_API_KEY
+        sync: false
