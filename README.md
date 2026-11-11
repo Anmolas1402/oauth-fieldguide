@@ -158,7 +158,9 @@ that allows a streaming response to stay open for a few minutes.
 - **Render:** `render.yaml` is included and is what runs the live site. New > Blueprint, pick the
   repo, and set `GEMINI_API_KEY` (or `ANTHROPIC_API_KEY`). Render skips an optional secret that is
   left empty in the Blueprint form, so if `/api/health` reports `"liveResearch": false`, add the key
-  under the service's Environment settings.
+  under the service's Environment settings. A Blueprint created from the public repo URL is not
+  connected to GitHub, so a push does not redeploy it: use Manual Deploy > Deploy latest commit,
+  or connect Render's GitHub app to the repository.
 - **Anything that runs a container:** `Dockerfile` is included (listens on `$PORT`, default 8080).
 
 ## Limitations
