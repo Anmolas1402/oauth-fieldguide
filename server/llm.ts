@@ -45,6 +45,8 @@ export interface LLM {
   readonly model: string;
   /** Models that were skipped because they were overloaded or out of quota. */
   readonly skippedModels?: string[];
+  /** Successful model requests made through this driver. */
+  readonly calls?: number;
   toolLoop(opts: ToolLoopOptions): Promise<ToolLoopResult>;
   /** Returns the raw JSON text; the caller validates it. */
   json(opts: JsonOptions): Promise<string>;
@@ -64,7 +66,7 @@ export class ModelStopError extends Error {
 
 export const DEFAULT_GEMINI_MODEL = "gemini-3.8-flash";
 /** Tried in order when GEMINI_MODEL is not set. Free-tier models are often overloaded (503). */
-export const GEMINI_FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash"];
+export const GEMINI_FALLBACK_MODELS = ["gemini-3.8-flash", "gemini-3.6-flash", "gemini-3.5-flash", "gemini-3.5-flash-lite", "gemini-3.1-flash-lite"];
 export const DEFAULT_ANTHROPIC_MODEL = "claude-opus-5-5";
 
 const env = (k: string) => process.env[k]?.trim() || "";
@@ -113,24 +115,62 @@ export function geminiDriver(model: string, client?: GoogleGenAI, candidates?: s
   const ai = client ?? new GoogleGenAI({ apiKey: geminiKey(), httpOptions: { retryOptions: { attempts: 1 } } });
   const models = candidates ?? (env("GEMINI_MODEL") ? [model] : GEMINI_FALLBACK_MODELS);
   let current = 0;
+  let calls = 0;
   const skipped: string[] = [];
 
   /** Calls the current model; on overload, quota or missing model, moves on and stays on the one that answered. */
-  const generate = async (params: Omit<Parameters<typeof ai.models.generateContent>[0], "model">) => {
+  type Params = Omit<Parameters<typeof ai.models.generateContent>[0], "model">;
+
+  /** Overloaded, out of quota, server error, or our own request timeout (not a user cancel). */
+  const isTransient = (err: unknown, params: Params) => {
+    if (params.config?.abortSignal?.aborted) return false;
+    if (err instanceof ApiError) return [404, 429, 500, 502, 503, 504].includes(err.status);
+    return err instanceof Error && /abort|timeout|timed out/i.test(`${err.name} ${err.message}`);
+  };
+  const statusOf = (err: unknown) => (err instanceof ApiError ? `HTTP ${err.status}` : "timed out");
+
+  /**
+   * For a standalone request (no conversation state), any candidate model will do: try each in
+   * turn, starting with the one in use, for a few rounds with backoff.
+   */
+  const generateAnyModel = async (params: Params) => {
+    let lastErr: unknown;
+    for (let round = 0; round < 3; round++) {
+      for (let k = 0; k < models.length; k++) {
+        const i = (current + k) % models.length;
+        try {
+          const res = await ai.models.generateContent({ ...params, model: models[i] });
+          calls++;
+          if (i !== current) {
+            skipped.push(`${models[current]} (unavailable for the guide-writing step)`);
+            current = i;
+          }
+          return res;
+        } catch (err) {
+          if (!isTransient(err, params)) throw err;
+          lastErr = err;
+        }
+      }
+      await new Promise((r) => setTimeout(r, 8000 * (round + 1)));
+    }
+    throw lastErr;
+  };
+
+  const generate = async (params: Params) => {
     let lastModelRetries = 0;
     for (;;) {
       try {
-        return await ai.models.generateContent({ ...params, model: models[current] });
+        const res = await ai.models.generateContent({ ...params, model: models[current] });
+        calls++;
+        return res;
       } catch (err) {
-        const status = err instanceof ApiError ? err.status : undefined;
-        const transient = status === 503 || status === 429 || status === 500;
-        if (params.config?.abortSignal?.aborted) throw err;
-        if ((transient || status === 404) && current < models.length - 1) {
-          skipped.push(`${models[current]} (HTTP ${status})`);
+        if (!isTransient(err, params)) throw err;
+        if (current < models.length - 1) {
+          skipped.push(`${models[current]} (${statusOf(err)})`);
           current++;
           continue;
         }
-        if (transient && lastModelRetries < 2) {
+        if (lastModelRetries < 2) {
           lastModelRetries++;
           await new Promise((r) => setTimeout(r, 4000 * lastModelRetries));
           continue;
@@ -159,6 +199,9 @@ export function geminiDriver(model: string, client?: GoogleGenAI, candidates?: s
     get skippedModels() {
       return [...skipped];
     },
+    get calls() {
+      return calls;
+    },
     async toolLoop(opts) {
       const contents: Content[] = [{ role: "user", parts: [{ text: opts.user }] }];
       const functionDeclarations = opts.tools.map((t) => ({ name: t.name, description: t.description, parametersJsonSchema: t.parameters }));
@@ -171,6 +214,7 @@ export function geminiDriver(model: string, client?: GoogleGenAI, candidates?: s
             tools: [{ functionDeclarations }],
             thinkingConfig: { thinkingLevel: geminiThinking(ThinkingLevel.LOW) },
             maxOutputTokens: 16000,
+            httpOptions: { timeout: 120_000 },
             abortSignal: opts.signal,
           },
         });
@@ -205,7 +249,7 @@ export function geminiDriver(model: string, client?: GoogleGenAI, candidates?: s
     },
     async json(opts) {
       const request = (withSchema: boolean) =>
-        generate({
+        generateAnyModel({
           contents: [{ role: "user", parts: [{ text: opts.user }] }],
           config: {
             systemInstruction: opts.system,
@@ -213,6 +257,7 @@ export function geminiDriver(model: string, client?: GoogleGenAI, candidates?: s
             ...(withSchema ? { responseJsonSchema: opts.schema } : {}),
             thinkingConfig: { thinkingLevel: geminiThinking(ThinkingLevel.MEDIUM) },
             maxOutputTokens: 32000,
+            httpOptions: { timeout: 240_000 },
             abortSignal: opts.signal,
           },
         });

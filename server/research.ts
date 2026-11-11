@@ -23,7 +23,9 @@ export type ResearchResult = {
   stop: string;
 };
 
-export const BUDGET = { turns: 10, fetches: 9, searches: 6 };
+export const BUDGET = { turns: 8, fetches: 9, searches: 6 };
+/** Fewer provider pages than this after the first pass triggers one short follow-up pass. */
+export const MIN_PAGES = 3;
 
 const SearchInput = z.object({ query: z.string().min(2).max(200) });
 const FetchInput = z.object({ url: z.string().min(8).max(2000) });
@@ -56,7 +58,7 @@ export const RESEARCH_SYSTEM = `You are a research agent inside "OAuth Fieldguid
 Your job in this phase is to gather evidence, not to write the guide. A second phase turns your notes and the retrieved pages into a structured guide, and a validator then checks every quote against the retrieved page text. Anything asserted without a retrieved page behind it will be labelled unverified, so retrieving the right pages matters more than writing a lot.
 
 Tools:
-- search_web finds candidate pages. Search can fail (the engines sometimes block automated requests). If it fails, keep going: fetch the provider's official developer documentation directly at URLs you expect to exist. fetch_page will tell you if a URL does not exist.
+- search_web finds candidate pages. Search often fails (the engines block automated requests). If it fails, do not stop and do not retry it: fetch the provider's official developer documentation directly at URLs you expect to exist, then follow the links shown in square brackets inside pages you have read. fetch_page tells you if a URL does not exist. Aim to read at least four official pages that cover registration, redirect URIs, scopes and review.
 - fetch_page retrieves one page and gives it a source id. Only retrieved pages count as evidence.
 You have ${BUDGET.searches} searches and ${BUDGET.fetches} page fetches. When you already know which pages you need, request several fetches in the same turn.
 
@@ -208,6 +210,24 @@ export async function runResearch(opts: {
   });
 
   let notes = result.text;
+  let stop = result.stop;
+  const pagesRead = () => ledger.filter((s) => s.kind === "provider_page").length;
+
+  // A weak or unlucky first pass (search blocked, model stopped early) gets one more short pass.
+  if (pagesRead() < MIN_PAGES && counters.fetches < BUDGET.fetches && result.stop === "done" && !/STATUS:\s*not_identified/i.test(notes)) {
+    emit({ id: "second-pass", kind: "note", label: `Only ${pagesRead()} provider pages read; asking for more before writing the guide`, state: "done" });
+    const read = ledger.filter((s) => s.kind === "provider_page").map((s) => `${s.id} ${s.url} (${s.title})`).join("\n") || "none";
+    const second = await llm.toolLoop({
+      system: RESEARCH_SYSTEM,
+      user: `Provider to investigate: ${providerName}\nToday's date: ${new Date().toISOString().slice(0, 10)}\n\n${composioContext}\n\nYou already read these pages:\n${read}\n\nYour notes so far:\n${notes || "(none)"}\n\nThat is not enough evidence. Fetch more official documentation pages (registration, redirect URIs, scopes, review or publishing), following links from the pages above where useful. Then write the complete research notes in the required shape, keeping the source ids above.`,
+      tools: TOOLS,
+      maxTurns: 4,
+      signal: opts.signal,
+      execute: (calls) => Promise.all(calls.map(execOne)),
+    });
+    if (second.text) notes = second.text;
+    stop = second.stop;
+  }
   if (!notes) {
     const pages = ledger.filter((s) => s.kind === "provider_page").length;
     if (!pages) throw new PipelineError("research_empty", "Research ended without retrieving any provider page or producing notes.");
@@ -215,7 +235,7 @@ export async function runResearch(opts: {
     // writer works from them directly and says so.
     notes = `PROVIDER: ${providerName} | STATUS: identified\nThe research phase ended (${result.stop}) before writing notes. Work only from the retrieved sources.`;
   }
-  return { notes, ledger, log, stop: result.stop };
+  return { notes, ledger, log, stop };
 }
 
 export class PipelineError extends Error {

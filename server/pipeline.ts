@@ -12,7 +12,8 @@ import {
 } from "./composio.ts";
 import { composeGuide } from "./compose.ts";
 import { describeModelError, getLLM, hasModelCredentials } from "./llm.ts";
-import { PipelineError, runResearch, type LedgerSource } from "./research.ts";
+import { PipelineError, runResearch, type LedgerSource, type ResearchResult } from "./research.ts";
+import { clearResearchCache, readResearchCache, writeResearchCache } from "./researchCache.ts";
 import { resolveProvider } from "./resolve.ts";
 import { verifyDraft } from "./verify.ts";
 
@@ -35,6 +36,7 @@ export async function investigate(
   rawQuery: string,
   send: (event: PipelineEvent) => void,
   signal?: AbortSignal,
+  opts: { fresh?: boolean } = {},
 ): Promise<PipelineOutcome> {
   const started = Date.now();
   const query = rawQuery.trim().slice(0, 80);
@@ -150,19 +152,35 @@ export async function investigate(
       );
     }
     const llm = getLLM();
-    const research = await runResearch({
-      llm,
-      providerName,
-      query,
-      composio: facts,
-      seedSources: ledger,
-      signal,
-      emit: (activity) => send({ type: "activity", stage: "research", activity }),
-    });
+    const cacheKey = (facts.slug ?? query).toLowerCase();
+    const reused = opts.fresh ? null : await readResearchCache(cacheKey);
+    let research: ResearchResult;
+    if (reused) {
+      research = reused.research;
+      for (const s of research.ledger.filter((x) => x.kind === "provider_page")) {
+        send({ type: "activity", stage: "research", activity: { id: `reuse-${s.id}`, kind: "fetch", label: s.title, url: s.url, state: "done", detail: `${s.id} · retrieved ${s.retrievedAt.slice(11, 16)} UTC` } });
+      }
+    } else {
+      research = await runResearch({
+        llm,
+        providerName,
+        query,
+        composio: facts,
+        seedSources: ledger,
+        signal,
+        emit: (activity) => send({ type: "activity", stage: "research", activity }),
+      });
+      await writeResearchCache(cacheKey, research);
+    }
     const pages = research.ledger.filter((s) => s.kind === "provider_page").length;
     const failed = research.log.fetches.filter((f) => !f.ok).length;
     const skipped = llm.skippedModels?.length ? `; used ${llm.model} because ${llm.skippedModels.join(", ")} was unavailable` : "";
-    done("research", `${research.log.searches.length} searches, ${pages} pages read${failed ? `, ${failed} could not be retrieved` : ""}${skipped}`);
+    done(
+      "research",
+      reused
+        ? `Reused research from ${Math.round((Date.now() - reused.at) / 60000)} min ago (${pages} pages); guide writing had not finished then`
+        : `${research.log.searches.length} searches, ${pages} pages read${failed ? `, ${failed} could not be retrieved` : ""}${skipped}`,
+    );
 
     // 4. Compose the structured guide.
     begin("compose");
@@ -185,6 +203,8 @@ export async function investigate(
     });
     const c = guide.validation.counts;
     done("verify", `${c.verified} verified, ${c.inferred} inferred, ${c.unknown} unknown; ${guide.validation.adjustments.length} adjustments`);
+    if (llm.calls !== undefined) console.log(`[investigate] ${query}: ${llm.calls} model calls on ${llm.provider}/${llm.model}`);
+    await clearResearchCache(cacheKey); // only unfinished research is kept for reuse
     send({ type: "result", guide });
     return { kind: "guide", guide };
   } catch (err) {

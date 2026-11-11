@@ -23,13 +23,17 @@ const fakeFetch = (async (input: string | URL) => {
 }) as typeof fetch;
 
 /** A model that follows a script: each entry is one turn's tool calls; then it writes notes. */
-function scriptedLLM(turns: Array<Array<Omit<ToolCall, "id">>>, notes = "PROVIDER: Acme | STATUS: identified\nnotes"): LLM & { results: ToolResult[][] } {
+function scriptedLLM(turns: Array<Array<Omit<ToolCall, "id">>>, notes = "PROVIDER: Acme | STATUS: identified\nnotes"): LLM & { results: ToolResult[][]; loops: string[] } {
   const results: ToolResult[][] = [];
+  const loops: string[] = [];
   return {
     provider: "gemini",
     model: "fake",
     results,
+    loops,
     async toolLoop(opts: ToolLoopOptions) {
+      loops.push(opts.user);
+      if (loops.length > 1) return { text: notes ? notes + " (second pass)" : "", turns: 1, stop: "done" };
       for (let t = 0; t < turns.length && t < opts.maxTurns; t++) {
         results.push(await opts.execute(turns[t].map((c, i) => ({ ...c, id: `t${t}c${i}` }))));
       }
@@ -82,6 +86,23 @@ describe("research loop", () => {
     const finalState = new Map(activities.map((a) => [a.id, a.state]));
     expect([...finalState.values()].every((s) => s !== "running")).toBe(true);
     expect(activities.filter((a) => a.state === "failed").length).toBe(2);
+  });
+
+  it("asks for a second pass when too few provider pages were read, and says so", async () => {
+    const llm = scriptedLLM([[{ name: "fetch_page", args: { url: "https://developers.acme.dev/oauth" } }]]);
+    const activities: Activity[] = [];
+    const r = await runResearch({ llm, providerName: "Acme", query: "acme", composio, seedSources: [], emit: (a) => activities.push(a), fetchImpl: fakeFetch });
+    expect(llm.loops).toHaveLength(2);
+    expect(llm.loops[1]).toContain("S1 https://developers.acme.dev/oauth");
+    expect(activities.some((a) => a.kind === "note" && /Only 1 provider pages/.test(a.label))).toBe(true);
+    expect(r.notes).toMatch(/second pass/);
+  });
+
+  it("does not ask for a second pass for a provider it could not identify", async () => {
+    const llm = scriptedLLM([], "PROVIDER: Zzqqx | STATUS: not_identified");
+    const r = await runResearch({ llm, providerName: "Zzqqx", query: "zzqqx", composio, seedSources: [], emit: () => {}, fetchImpl: fakeFetch });
+    expect(r.notes).toMatch(/not_identified/);
+    expect(llm.loops).toHaveLength(1);
   });
 
   it("enforces the page budget", async () => {

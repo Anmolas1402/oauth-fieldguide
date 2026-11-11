@@ -10,6 +10,7 @@ const norm = (s: string) =>
     .replace(/[“”„″]/g, '"')
     .replace(/[‐-―]/g, "-")
     .replace(/[*_`#>|]/g, " ")
+    .replace(/(^|\s)\d{1,2}[.)](?=\s)/g, " ") // ordered-list numbers between joined steps
     .replace(/\s+/g, " ")
     .trim();
 
@@ -19,6 +20,24 @@ const norm = (s: string) =>
  * shingles must occur in the page.
  */
 export function quoteFound(quote: string, pageText: string): boolean {
+  // A quote with an ellipsis is several excerpts: each must be on the page, in order.
+  const parts = quote.split(/\s*(?:…|\.\.\.|\[\.\.\.\])\s*/).filter((p) => p.trim().length > 0);
+  if (parts.length > 1) {
+    const page = norm(pageText);
+    let from = 0;
+    for (const part of parts) {
+      const p = norm(part).replace(/^["'\s]+|["'\s.]+$/g, "");
+      if (p.length < 12) return false;
+      const at = page.indexOf(p, from);
+      if (at === -1) return false;
+      from = at + p.length;
+    }
+    return true;
+  }
+  return singleQuoteFound(quote, pageText);
+}
+
+function singleQuoteFound(quote: string, pageText: string): boolean {
   const q = norm(quote).replace(/^["'\s]+|["'\s.…]+$/g, "");
   if (q.length < 12) return false;
   const page = norm(pageText);
@@ -38,6 +57,9 @@ export function quoteFound(quote: string, pageText: string): boolean {
 /** A duration such as "3-5 business days" or "up to six weeks". */
 export const DURATION_RE =
   /\b(\d+(\s*(-|to|–)\s*\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|several|a few|couple of)\s+(business\s+|working\s+)?(minute|hour|day|week|month)s?\b/i;
+
+/** Verbs that mean acting inside an account (as opposed to researching or drafting). */
+export const CONSOLE_ACTION_RE = /\b(click|log ?in|sign ?in|sign up|paste|submit|install|authori[sz]e|enable|toggle|press|select .* in the (dashboard|console|portal))\b/i;
 
 export const NO_TIMELINE_TEXT =
   "No review timeline published by the provider was found in the pages retrieved for this investigation.";
@@ -84,7 +106,11 @@ export function verifyDraft(
           } else {
             claim.status = "inferred";
             claim.quote = null;
-            adjustments.push({ path, change: "verified → inferred", reason: "the quoted text was not found in the cited page" });
+            adjustments.push({
+              path,
+              change: "verified → inferred",
+              reason: `the quoted text was not found in the cited page: "${quote.length > 160 ? quote.slice(0, 160) + "…" : quote}"`,
+            });
           }
         }
       }
@@ -116,6 +142,18 @@ export function verifyDraft(
     const bare = stripUrl(u);
     return allUrls.has(bare) || allText.includes(bare) || allText.includes(u);
   };
+
+  // A step that happens inside a logged-in console cannot be "agent can prepare".
+  out.steps.forEach((s, i) => {
+    if (s.actor === "agent_prepares" && CONSOLE_ACTION_RE.test(`${s.title} ${s.action}`)) {
+      s.actor = "agent_assists";
+      adjustments.push({
+        path: `steps[${i}].actor`,
+        change: "agent can prepare → agent assists",
+        reason: "the step is performed inside a logged-in dashboard or console, so a person has to do or approve it",
+      });
+    }
+  });
 
   const steps = out.steps.map((s) => ({ ...s, linkSeenInSources: urlSeen(s.link) }));
   const examples = out.scopes.examples.map((e) => {

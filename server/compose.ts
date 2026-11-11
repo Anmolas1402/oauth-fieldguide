@@ -3,6 +3,8 @@ import { GuideDraftSchema, type ComposioFacts, type GuideDraft } from "../shared
 import type { LLM } from "./llm.ts";
 import { PipelineError, type LedgerSource } from "./research.ts";
 
+export const COMPOSE_CHARS_PER_SOURCE = 15_000;
+
 /** JSON Schema sent to the model; the Zod schema stays the source of truth and validates the reply. */
 export const GUIDE_JSON_SCHEMA = (() => {
   const { $schema: _drop, ...rest } = z.toJSONSchema(GuideDraftSchema) as Record<string, unknown>;
@@ -24,10 +26,12 @@ Approval and timing:
 - handsOnEffort is this tool's own estimate of the developer's hands-on time to complete registration and configuration, excluding any external review wait. Give a range and say in "basis" what it assumes. It is an estimate, and the UI labels it as one.
 
 Steps:
+- Cover the whole path from nothing to a first working connection, as far as the sources support it: accounts, creating the app, redirect URI, scopes or permissions, distribution or publishing choice, putting the credentials into Composio, connecting a test account, and submitting for review when the developer's use needs it. Typically 6 to 10 steps.
 - Order them as the developer would do them. "action" is the exact thing to do, including field names where the pages give them. "where" names the console page or file. "link" is a URL that appears in the retrieved pages (a console or docs URL), or null.
 - Include the Composio side where it applies: creating an auth config with the client ID and secret, and adding Composio's redirect URI in the provider console. Composio's own pages are the sources with kind="composio"; cite them for Composio-side steps.
 
 Who does what. This product can research and prepare; it cannot act inside provider consoles. Classify each step's "actor" honestly:
+- Anything done by clicking, typing or pasting inside a dashboard or console the developer is logged in to is at least "agent_assists", never "agent_prepares".
 - "agent_prepares": an agent can do this without the developer's accounts, for example working out which scopes are needed, drafting consent-screen copy or an app manifest, or working out the redirect URI value.
 - "agent_assists": an agent can prepare the inputs and walk the developer through it, but a logged-in human has to perform or authorize it, for example filling a registration form in the developer's account.
 - "human_only": creating accounts, accepting terms, identity or business verification, payment, submitting for review, admin approvals, and viewing or storing client secrets.
@@ -54,8 +58,12 @@ export async function composeGuide(opts: {
   signal?: AbortSignal;
 }): Promise<GuideDraft> {
   const { llm, composio, ledger } = opts;
+  // Each page is capped for the prompt. The validator still checks quotes against the full text.
   const sourcesBlock = ledger
-    .map((s) => `<source id="${s.id}" kind="${s.kind}" url="${s.url}" title="${s.title.replace(/"/g, "'")}">\n${s.text}\n</source>`)
+    .map((s) => {
+      const text = s.text.length > COMPOSE_CHARS_PER_SOURCE ? `${s.text.slice(0, COMPOSE_CHARS_PER_SOURCE)}\n[page continues; not shown]` : s.text;
+      return `<source id="${s.id}" kind="${s.kind}" url="${s.url}" title="${s.title.replace(/"/g, "'")}">\n${text}\n</source>`;
+    })
     .join("\n\n");
   const composioBlock = JSON.stringify(
     {

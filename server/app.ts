@@ -118,7 +118,7 @@ export function createApp() {
             send({ type: "composio", facts: cached.guide.composio });
             send({ type: "result", guide: cached.guide });
           } else {
-            const outcome = await investigate(query, send, abort.signal);
+            const outcome = await investigate(query, send, abort.signal, { fresh });
             if (outcome.kind === "guide") cache.set(cacheKey, { at: Date.now(), guide: outcome.guide });
           }
         } finally {

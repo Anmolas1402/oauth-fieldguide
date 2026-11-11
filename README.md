@@ -88,7 +88,7 @@ browser ── POST /api/investigate ──> server (Hono, Node)
     blocking engine is skipped for 10 minutes, and every failure is shown in the progress view and log.
   - `fetch_page` (`server/fetchPage.ts`): https only, public hosts only, redirects re-checked, 30,000
     characters per page.
-  Budgets: at most 6 searches, 9 pages, 10 model turns. The server keeps the text of every page it
+  Budgets: at most 6 searches, 9 pages, 8 model turns. The server keeps the text of every page it
   retrieved. If search is blocked, the model is told to fetch official documentation URLs directly.
 - **The model is behind a small driver** (`server/llm.ts`): Gemini (`gemini-3.8-flash` by default)
   or Claude. Both get the same tools and prompts.

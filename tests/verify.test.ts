@@ -12,6 +12,16 @@ describe("quoteFound", () => {
   it("tolerates link targets that the HTML conversion inserts mid-sentence", () => {
     expect(quoteFound("Go to the Developer Portal and click New app.", page)).toBe(true);
   });
+  it("tolerates list numbers between consecutive steps the quote joins", () => {
+    const steps = "Steps\n 3.  In the left sidebar, click OAuth apps.\n\n 4.  Click New OAuth App.\n";
+    expect(quoteFound("In the left sidebar, click OAuth apps. Click New OAuth App.", steps)).toBe(true);
+    expect(quoteFound("Version 2.0 of the protocol is required.", "Version 2.0 of the protocol is required.")).toBe(true);
+  });
+  it("accepts an elided quote only when each excerpt appears in order", () => {
+    expect(quoteFound("Redirect URIs must use HTTPS … The client secret is shown only once.", page)).toBe(true);
+    expect(quoteFound("The client secret is shown only once. … Redirect URIs must use HTTPS", page)).toBe(false);
+    expect(quoteFound("Redirect URIs must use HTTPS … secrets never expire at all", page)).toBe(false);
+  });
   it("rejects text that is not on the page", () => {
     expect(quoteFound("Wildcard subdomains are permitted for all redirect URIs.", page)).toBe(false);
     expect(quoteFound("HTTPS", page)).toBe(false); // too short to count as evidence
@@ -30,6 +40,7 @@ describe("verifyDraft", () => {
     expect(result.draft.redirectRules[1].status).toBe("inferred");
     expect(result.draft.redirectRules[1].quote).toBeNull();
     expect(reasons).toContain("redirectRules[1]: verified → inferred");
+    expect(result.validation.adjustments.find((a) => a.path === "redirectRules[1]")?.reason).toContain("Wildcard subdomains are permitted");
   });
   it("drops citations to pages that were never retrieved", () => {
     expect(result.draft.steps[0].sourceIds).toEqual(["S2"]);
@@ -65,6 +76,24 @@ describe("verifyDraft", () => {
     expect(c.verified + c.inferred + c.unknown).toBe(11);
     expect(c.unknown).toBe(1);
     expect(makeDraft().redirectRules[1].status).toBe("verified");
+  });
+});
+
+describe("actor guard", () => {
+  it("moves a logged-in console action out of 'agent can prepare'", () => {
+    const d = makeDraft();
+    d.steps[0].actor = "agent_prepares";
+    d.steps[0].action = "Click Create in the dashboard and copy the ID.";
+    const r = verifyDraft(d, sources);
+    expect(r.steps[0].actor).toBe("agent_assists");
+    expect(r.validation.adjustments.map((a) => a.path)).toContain("steps[0].actor");
+  });
+  it("leaves genuine preparation alone", () => {
+    const d = makeDraft();
+    d.steps[0].actor = "agent_prepares";
+    d.steps[0].title = "Work out the scopes";
+    d.steps[0].action = "List the read and write scopes the integration needs.";
+    expect(verifyDraft(d, sources).steps[0].actor).toBe("agent_prepares");
   });
 });
 
