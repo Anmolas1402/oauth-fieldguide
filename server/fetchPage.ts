@@ -1,4 +1,5 @@
 import { convert } from "html-to-text";
+import { assertPublicHost, resolveHostDns, safeFetch, type ResolveHost } from "./netguard.ts";
 
 export type FetchedPage =
   | { ok: true; url: string; finalUrl: string; title: string; text: string; truncated: boolean; chars: number }
@@ -64,12 +65,26 @@ export function htmlToText(html: string): { title: string; text: string } {
   return { title, text };
 }
 
-export async function fetchPage(rawUrl: string, fetchImpl: typeof fetch = fetch): Promise<FetchedPage> {
+/**
+ * Reads one public page. Every hop (including redirects) is checked twice: the URL shape (checkUrl),
+ * then the DNS answers for its host (assertPublicHost). The default fetch also re-checks DNS at connect
+ * time (see netguard.ts), which covers DNS rebinding between the two lookups.
+ */
+export async function fetchPage(
+  rawUrl: string,
+  fetchImpl: typeof fetch = safeFetch,
+  resolveHost: ResolveHost = resolveHostDns,
+): Promise<FetchedPage> {
   let current = rawUrl;
   try {
     for (let hop = 0; hop < 5; hop++) {
       const checked = checkUrl(current);
       if (!checked.ok) return { ok: false, url: rawUrl, reason: checked.reason };
+      try {
+        await assertPublicHost(checked.url.hostname, resolveHost);
+      } catch (err) {
+        return { ok: false, url: rawUrl, reason: err instanceof Error ? err.message : "host did not resolve" };
+      }
       const res = await fetchImpl(checked.url, {
         redirect: "manual",
         headers: { "user-agent": UA, accept: "text/html,text/markdown,text/plain;q=0.9,*/*;q=0.5", "accept-language": "en" },
@@ -118,7 +133,11 @@ export async function fetchPage(rawUrl: string, fetchImpl: typeof fetch = fetch)
     return { ok: false, url: rawUrl, reason: "too many redirects" };
   } catch (err) {
     const name = err instanceof Error ? err.name : "";
-    const reason = name === "TimeoutError" || name === "AbortError" ? "timed out after 15s" : `network error: ${err instanceof Error ? err.message : String(err)}`;
+    const cause = err instanceof Error && err.cause instanceof Error ? err.cause.message : "";
+    const reason =
+      name === "TimeoutError" || name === "AbortError"
+        ? "timed out after 15s"
+        : `network error: ${err instanceof Error ? err.message : String(err)}${cause ? ` (${cause})` : ""}`;
     return { ok: false, url: rawUrl, reason };
   }
 }

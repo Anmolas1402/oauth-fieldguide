@@ -1,5 +1,6 @@
 import type { ComposioFacts, Guide, NoOAuthResult, PipelineEvent, Source, StageId } from "../shared/schema.ts";
 import { GuideSchema } from "../shared/schema.ts";
+import { investigationGaps } from "../shared/derive.ts";
 import {
   CATALOGUE_URL,
   MANAGED_VS_CUSTOM_URL,
@@ -187,7 +188,8 @@ export async function investigate(
     // 4. Compose the structured guide.
     begin("compose");
     const draft = await composeGuide({ llm, providerName, query, composio: facts, notes: research.notes, ledger: research.ledger, signal });
-    done("compose", `${draft.steps.length} setup steps drafted`);
+    const composeSkips = (llm.skippedModels ?? []).filter((x) => x.includes("guide-writing"));
+    done("compose", `${draft.steps.length} setup steps drafted on ${llm.model}${composeSkips.length ? `; skipped ${composeSkips.join(", ")}` : ""}`);
 
     // 5. Cross-check every claim against the retrieved text.
     begin("verify");
@@ -205,7 +207,12 @@ export async function investigate(
       validation: checked.validation,
     });
     const c = guide.validation.counts;
-    done("verify", `${c.verified} verified, ${c.inferred} inferred, ${c.unknown} unknown; ${guide.validation.adjustments.length} adjustments`);
+    const gaps = investigationGaps(guide);
+    done(
+      "verify",
+      `${c.verified} verified, ${c.inferred} inferred, ${c.unknown} unknown; ${guide.validation.adjustments.length} adjustments` +
+        (gaps.length ? `; incomplete investigation (${gaps.length} gap${gaps.length === 1 ? "" : "s"})` : ""),
+    );
     if (llm.calls !== undefined) console.log(`[investigate] ${query}: ${llm.calls} model calls on ${llm.provider}/${llm.model}`);
     await clearResearchCache(cacheKey); // only unfinished research is kept for reuse
     send({ type: "result", guide });

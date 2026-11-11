@@ -7,7 +7,7 @@
   },
   "oauthAppKind": "Slack App",
   "authMethod": {
-    "text": "Slack apps use a v2 OAuth 2.0 flow to request bot and user scopes and exchange temporary authorization codes for access tokens.",
+    "text": "Slack apps are installed with a v2 OAuth 2.0 flow.",
     "status": "verified",
     "sourceIds": [
       "S4"
@@ -25,16 +25,16 @@
   "externalReview": {
     "requirement": "conditional",
     "summary": {
-      "text": "Marketplace review is required for commercial public distribution, whereas unlisted distribution or single-workspace apps do not require public review.",
+      "text": "Apps listed in the Slack Marketplace are reviewed against Slack's requirements and guidelines; unlisted distributed apps are not.",
       "status": "verified",
       "sourceIds": [
         "S6"
       ],
-      "quote": "Apps intended for commercial distribution should be submitted and approved for listing in the Slack Marketplace."
+      "quote": "Unlike unlisted distributed apps, apps listed in the Slack Marketplace are reviewed against our requirements & guidelines"
     },
     "triggers": [
       {
-        "text": "Submitting the app for listing in the Slack Marketplace for broad commercial distribution.",
+        "text": "Submitting the app for a Slack Marketplace listing, which Slack recommends for apps intended for commercial distribution.",
         "status": "verified",
         "sourceIds": [
           "S6"
@@ -52,7 +52,7 @@
   "prerequisites": [
     {
       "kind": "account",
-      "text": "A Slack account and workspace (developer sandbox recommended).",
+      "text": "A Slack workspace to develop in; Slack recommends setting up a developer sandbox if you don't have one.",
       "status": "verified",
       "sourceIds": [
         "S7"
@@ -67,12 +67,20 @@
   },
   "redirectRules": [
     {
-      "text": "The redirect URL must use HTTPS, match or be a subdirectory of a configured Redirect URL under App Management, and cannot contain an anchor (#).",
+      "text": "The redirect_uri, and any Redirect URL configured under OAuth & Permissions, must use HTTPS.",
       "status": "verified",
       "sourceIds": [
         "S4"
       ],
-      "quote": "The redirect_uri must use HTTPS. Alternatively, you can configure a Redirect URL in the App Management page under OAuth & Permissions."
+      "quote": "The redirect_uri must use HTTPS. Alternatively, you can configure a Redirect URL in the App Management page under OAuth & Permissions. A Redirect URL must also use HTTPS."
+    },
+    {
+      "text": "The redirect_uri must match or be a subdirectory of a Redirect URL configured under App Management, and a Redirect URL can't contain an anchor (#).",
+      "status": "verified",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": "Your redirect_uri must match or be a subdirectory of a Redirect URL configured under App Management. A Redirect URL can not contain an anchor (#)."
     }
   ],
   "scopes": {
@@ -122,12 +130,12 @@
       "link": "https://api.slack.com/apps",
       "actor": "human_only",
       "actorReason": "Requires logging into the developer's Slack account and creating resources in the dashboard.",
-      "text": "Navigate to the Slack App Management console and create a new Slack app.",
+      "text": "Create the Slack app; a new app resides in one workspace until you distribute it, listed or unlisted.",
       "status": "verified",
       "sourceIds": [
-        "S4"
+        "S6"
       ],
-      "quote": "App Management page",
+      "quote": "When you create a Slack app, it resides in one workspace. You can also distribute Slack apps in either listed or unlisted fashion.",
       "linkSeenInSources": true
     },
     {
@@ -152,7 +160,7 @@
       "link": null,
       "actor": "agent_assists",
       "actorReason": "An agent can provide the exact redirect URI value while the developer inputs it into the Slack dashboard.",
-      "text": "Configure your application's redirect URLs to accept authorization callbacks over HTTPS.",
+      "text": "Configure a Redirect URL in the App Management page under OAuth & Permissions.",
       "status": "verified",
       "sourceIds": [
         "S4"
@@ -167,12 +175,12 @@
       "link": "https://dashboard.composio.dev",
       "actor": "agent_assists",
       "actorReason": "An agent can guide the dashboard configuration steps while the developer interacts with the UI.",
-      "text": "Set up a custom auth configuration in Composio to retrieve the required redirect URI and provide credentials.",
-      "status": "inferred",
+      "text": "Create the auth config in the Composio dashboard and enter the required credential fields.",
+      "status": "verified",
       "sourceIds": [
         "S3"
       ],
-      "quote": null,
+      "quote": "1. Click Create Auth Config 2. Select the toolkit 3. Choose the auth scheme (OAuth2, API Key, Bearer Token, etc.) 4. Follow the dashboard instructions for the required credential fields",
       "linkSeenInSources": true
     },
     {
@@ -191,6 +199,21 @@
       "linkSeenInSources": false
     },
     {
+      "title": "Activate public distribution",
+      "action": "In the app's dashboard, scroll to Share Your App with Other Workspaces under Manage Distribution, complete the checklist, and click Activate Public Distribution. Without this, only the app's own workspace can install it.",
+      "where": "Slack app dashboard, Manage Distribution",
+      "link": null,
+      "linkSeenInSources": false,
+      "actor": "human_only",
+      "actorReason": "Changing an app's distribution is a console action taken by the app's owner.",
+      "text": "To let other workspaces install the app, complete the checklist under Share Your App with Other Workspaces and click Activate Public Distribution.",
+      "status": "verified",
+      "sourceIds": [
+        "S6"
+      ],
+      "quote": "Scroll to Share Your App with Other Workspaces within the Manage Distribution section. 3. Ensure all items in the supplied checklist are completed. 4. Click Activate Public Distribution."
+    },
+    {
       "title": "Connect a Test Account",
       "action": "Initiate the OAuth flow to connect a test workspace account.",
       "where": "Composio Connect Link or application auth flow",
@@ -198,11 +221,11 @@
       "actor": "human_only",
       "actorReason": "Authorizing permissions and installing the app on a workspace requires human approval.",
       "text": "Test the connection by completing the OAuth authorization flow in your target workspace.",
-      "status": "verified",
+      "status": "inferred",
       "sourceIds": [
         "S4"
       ],
-      "quote": "Waiting for a user to give their approval, and exchanging a temporary authorization code for an access token.",
+      "quote": null,
       "linkSeenInSources": false
     },
     {
@@ -232,18 +255,19 @@
       "Creating a Slack workspace and registering the Slack App in the API console.",
       "Configuring redirect URLs and scopes in the Slack App settings.",
       "Copying Client ID and Client Secret into Composio.",
-      "Authorizing the app installation and submitting for Marketplace review if commercial distribution is needed."
+      "Authorizing the app installation and submitting for Marketplace review if commercial distribution is needed.",
+      "Activating public distribution so other workspaces can install the app."
     ]
   },
   "risks": [
     {
       "kind": "blocker",
-      "text": "Workspaces with 'Require apps from Slack Marketplace' or 'Require approved apps' enabled will block installation until configured or approved by an admin.",
+      "text": "Some workspaces only let admins authorize app installs, some only allow apps listed in the Slack Marketplace, and some require admin approval before an install.",
       "status": "verified",
       "sourceIds": [
-        "S1"
+        "S6"
       ],
-      "quote": "When a member of a Slack workspace tries to install a non-Marketplace app."
+      "quote": "Some workspaces will restrict app installation so that only workspace administrators can provide authorization. Other workspaces may only allow the installation of apps officially listed in the Slack Marketplace. … Workspaces can also enable admin approval"
     },
     {
       "kind": "security",
@@ -450,10 +474,75 @@
         "path": "scopes.examples",
         "change": "flagged scope strings",
         "reason": "not found verbatim in a retrieved page: search:read"
+      },
+      {
+        "path": "authMethod",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old text also described bot and user scopes and the code exchange; the quote only names the flow."
+      },
+      {
+        "path": "externalReview.summary",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old quote did not cover the claim that unlisted or single-workspace apps need no review; this one covers unlisted apps."
+      },
+      {
+        "path": "externalReview.triggers[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "Reworded to match the quote's 'should', not a requirement."
+      },
+      {
+        "path": "prerequisites[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old text said a Slack account and workspace are required; the quote is a recommendation for when you have no workspace."
+      },
+      {
+        "path": "redirectRules[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "Split: the subdirectory and anchor rules were not in the quote."
+      },
+      {
+        "path": "redirectRules[1]",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Split from redirectRules[0] with its own quote."
+      },
+      {
+        "path": "steps[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old quote was the fragment 'App Management page'."
+      },
+      {
+        "path": "steps[2]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old text added 'over HTTPS', which this quote does not cover (redirectRules[0] does)."
+      },
+      {
+        "path": "steps[3]",
+        "change": "manual audit 2026-11-11: inferred → verified",
+        "reason": "Composio's page states the steps; upgraded with the quote."
+      },
+      {
+        "path": "steps[6]",
+        "change": "manual audit 2026-11-11: verified → inferred",
+        "reason": "The quote describes the OAuth flow in general; it does not say to test the connection. Testing is a sensible step, so it stays, labelled inferred."
+      },
+      {
+        "path": "steps[5]",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Missing step: Composio users connect their own workspaces, which needs distribution turned on. Stated on the retrieved distribution page."
+      },
+      {
+        "path": "risks[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old quote was a sentence fragment from Composio's page; Slack's own distribution page states all three restrictions."
+      },
+      {
+        "path": "division.humanOnly",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Follows the added step."
       }
     ],
     "counts": {
-      "verified": 12,
+      "verified": 14,
       "inferred": 3,
       "unknown": 1
     },

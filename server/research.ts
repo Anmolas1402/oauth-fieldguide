@@ -1,6 +1,7 @@
 import { z } from "zod";
 import type { Activity, ComposioFacts, InvestigationLog } from "../shared/schema.ts";
 import { fetchPage, MAX_CHARS } from "./fetchPage.ts";
+import type { ResolveHost } from "./netguard.ts";
 import type { LLM, ToolCall, ToolDef, ToolResult } from "./llm.ts";
 import { searchWeb, type SearchOutcome } from "./search.ts";
 
@@ -58,7 +59,7 @@ export const RESEARCH_SYSTEM = `You are a research agent inside "OAuth Fieldguid
 Your job in this phase is to gather evidence, not to write the guide. A second phase turns your notes and the retrieved pages into a structured guide, and a validator then checks every quote against the retrieved page text. Anything asserted without a retrieved page behind it will be labelled unverified, so retrieving the right pages matters more than writing a lot.
 
 Tools:
-- search_web finds candidate pages. Search often fails (the engines block automated requests). If it fails, do not stop and do not retry it: fetch the provider's official developer documentation directly at URLs you expect to exist, then follow the links shown in square brackets inside pages you have read. fetch_page tells you if a URL does not exist. Aim to read at least four official pages that cover registration, redirect URIs, scopes and review.
+- search_web finds candidate pages. Search often fails (the engines block automated requests). If it fails, do not stop and do not retry it: fetch the provider's official developer documentation directly at URLs you expect to exist, then follow the links shown in square brackets inside pages you have read. If you are unsure of exact page URLs, fetch the documentation site's index first: many developer-doc sites publish https://<docs host>/llms.txt listing their pages, and some publish /sitemap.xml. fetch_page tells you if a URL does not exist. Aim to read at least four official pages that cover registration, redirect URIs, scopes and review.
 - fetch_page retrieves one page and gives it a source id. Only retrieved pages count as evidence. Prefer the provider's own documentation; pages from integration vendors or blogs are labelled third-party in the guide. Some official sites cannot be read by this tool (they need JavaScript or block automated clients); when that happens, say so in the notes rather than relying silently on secondary pages.
 You have ${BUDGET.searches} searches and ${BUDGET.fetches} page fetches. When you already know which pages you need, request several fetches in the same turn.
 
@@ -103,6 +104,7 @@ export async function runResearch(opts: {
   emit: Emit;
   signal?: AbortSignal;
   fetchImpl?: typeof fetch;
+  resolveHost?: ResolveHost;
 }): Promise<ResearchResult> {
   const { llm, providerName, composio, emit } = opts;
   const ledger: LedgerSource[] = [...opts.seedSources];
@@ -161,7 +163,7 @@ export async function runResearch(opts: {
       }
       counters.fetches++;
       emit({ id: call.id, kind: "fetch", label: url, url, state: "running" });
-      const page = await fetchPage(url, opts.fetchImpl);
+      const page = await fetchPage(url, opts.fetchImpl, opts.resolveHost);
       if (!page.ok) {
         failedUrls.set(url, page.reason);
         log.fetches.push({ url, ok: false, sourceId: null, detail: page.reason });

@@ -1,4 +1,5 @@
 import { Hono } from "hono";
+import { getConnInfo } from "@hono/node-server/conninfo";
 import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -28,7 +29,25 @@ let dayCount = 0;
 const cache = new Map<string, { at: number; guide: Guide }>();
 const CACHE_TTL = 6 * 60 * 60 * 1000;
 
-function allow(ip: string): string | null {
+/**
+ * Which address the per-IP limit counts against. X-Forwarded-For is client-controlled except for the
+ * entries appended by proxies we actually sit behind, so only the entry TRUSTED_PROXY_HOPS from the
+ * right is used (Render's proxy appends exactly one). With no trusted proxy, the socket address is
+ * used and forwarded headers are ignored. CF-Connecting-IP is never trusted: we are not behind a
+ * Cloudflare deployment we control, so a client could set it to anything.
+ */
+export function clientAddress(forwardedFor: string | undefined, socketAddress: string | undefined, trustedHops: number): string {
+  if (trustedHops > 0 && forwardedFor) {
+    const chain = forwardedFor.split(",").map((s) => s.trim()).filter(Boolean);
+    const pick = chain[chain.length - trustedHops];
+    if (pick) return pick;
+  }
+  return socketAddress ?? "unknown";
+}
+// Render sets RENDER=true and its proxy appends one X-Forwarded-For entry.
+const TRUSTED_HOPS = Number(process.env.TRUSTED_PROXY_HOPS ?? (process.env.RENDER ? 1 : 0));
+
+export function allow(ip: string): string | null {
   const now = Date.now();
   const today = new Date().toISOString().slice(0, 10);
   if (today !== day) {
@@ -90,7 +109,15 @@ export function createApp() {
     const cached = cache.get(cacheKey);
     const useCache = !fresh && cached && Date.now() - cached.at < CACHE_TTL;
     if (!useCache && hasModelCredentials()) {
-      const ip = c.req.header("cf-connecting-ip") ?? c.req.header("x-forwarded-for")?.split(",")[0].trim() ?? "local";
+      let socket: string | undefined;
+      try {
+        socket = getConnInfo(c).remote.address;
+      } catch {
+        socket = undefined; // not running on the Node adapter (tests)
+      }
+      const xff = c.req.header("x-forwarded-for");
+      const ip = clientAddress(xff, socket, TRUSTED_HOPS);
+      console.log(`[ratelimit] forwarded-for entries: ${xff ? xff.split(",").length : 0}, trusted hops: ${TRUSTED_HOPS}`);
       const blocked = allow(ip);
       if (blocked) return c.json({ error: blocked }, 429);
     }
@@ -122,6 +149,11 @@ export function createApp() {
             const outcome = await investigate(query, send, abort.signal, { fresh });
             if (outcome.kind === "guide") cache.set(cacheKey, { at: Date.now(), guide: outcome.guide });
           }
+        } catch (err) {
+          // investigate() reports its own failures; this covers the replay path and anything unexpected,
+          // so the client always receives a terminal event instead of a silently closed stream.
+          if (useCache) cache.delete(cacheKey);
+          send({ type: "error", code: "internal", message: err instanceof Error ? err.message.slice(0, 240) : "Unexpected server error." });
         } finally {
           clearInterval(ping);
           clearTimeout(overall);

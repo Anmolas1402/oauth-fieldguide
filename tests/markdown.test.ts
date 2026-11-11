@@ -50,3 +50,27 @@ describe("markdown export", () => {
     );
   });
 });
+
+import { investigationGaps } from "../shared/derive.ts";
+import { guideToMarkdown as toMd } from "../shared/markdown.ts";
+import { GuideSchema as GS } from "../shared/schema.ts";
+import { readFileSync } from "node:fs";
+
+describe("incomplete-investigation state", () => {
+  const load = (slug: string) => GS.parse(JSON.parse(readFileSync(`data/guides/${slug}.json`, "utf8")));
+  it("flags a guide with no official pages, few verified steps and unknown review", () => {
+    const g = load("github");
+    g.validation.officialPagesRead = 0;
+    g.steps = g.steps.slice(0, 2);
+    g.externalReview.requirement = "unknown";
+    const gaps = investigationGaps(g);
+    expect(gaps).toHaveLength(3);
+    expect(gaps[0]).toMatch(/No page from GitHub's own documentation/);
+    expect(toMd(g)).toMatch(/Incomplete investigation/);
+  });
+  it("flags when fewer than half the steps are verified", () => {
+    const g = load("github");
+    g.steps = g.steps.map((s, i) => ({ ...s, status: i === 0 ? "verified" : "inferred" }));
+    expect(investigationGaps(g).join(" ")).toMatch(/Only 1 of \d+ setup steps/);
+  });
+});

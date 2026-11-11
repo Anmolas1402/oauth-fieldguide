@@ -7,48 +7,47 @@
   },
   "oauthAppKind": "Shopify App",
   "authMethod": {
-    "text": "OAuth 2.0 (Authorization Code Grant or Token Exchange)",
+    "text": "Apps that run outside the Shopify admin use the authorization code grant: the merchant is redirected to Shopify to approve access, then back to the app with a code that the app exchanges for an access token.",
     "status": "verified",
     "sourceIds": [
-      "S1",
       "S4"
     ],
-    "quote": "Shopify is an e-commerce platform. This toolkit is GraphQL-first for new Admin API automations while retaining legacy REST compatibility actions for older workflows and numeric-ID interoperability"
+    "quote": "for apps that run outside the Shopify admin. The merchant is redirected to Shopify to approve access, then back to your app with a code that your app exchanges for an access token."
   },
   "difficulty": {
     "level": "high",
-    "rationale": "Requires managing client credentials, strict scoping, test store setup, billing integration, and public review for app store distribution."
+    "rationale": "Needs client credentials, scope choices, a development store for testing, expiring offline tokens for public apps, and Shopify App Store review if the app is listed publicly."
   },
   "handsOnEffort": {
     "estimate": "2 to 4 hours",
-    "basis": "Assumes creating a Partner account, setting up an app in the Dev Dashboard, configuring scopes, and wiring custom credentials into Composio."
+    "basis": "Assumes an existing Shopify store or Partner organization, creating the app in the Dev Dashboard, setting scopes and redirect URLs, and entering the credentials into Composio. Excludes App Store review time."
   },
   "externalReview": {
     "requirement": "conditional",
     "summary": {
-      "text": "Public apps intended for the Shopify App Store must pass an external app review before distribution.",
+      "text": "Apps submitted to the Shopify App Store are reviewed by the Shopify app review team before approval.",
       "status": "verified",
       "sourceIds": [
         "S5"
       ],
-      "quote": "Before you submit your app to Shopify, you should do some final tests, validations, and administrative tasks to ensure that it's ready for review, and ready for merchants to use the app in production."
+      "quote": "If you've followed all of the requirements to create your app, then you're ready to submit your app for review by the Shopify app review team."
     },
     "triggers": [
       {
-        "text": "Distributing the app publicly via the Shopify App Store triggers a mandatory review.",
+        "text": "Submitting the app for a Shopify App Store listing.",
         "status": "verified",
         "sourceIds": [
           "S5"
         ],
-        "quote": "Before you submit your app to Shopify, you should do some final tests, validations, and administrative tasks to ensure that it's ready for review, and ready for merchants to use the app in production."
+        "quote": "If you've followed all of the requirements to create your app, then you're ready to submit your app for review by the Shopify app review team."
       },
       {
-        "text": "Requesting access to protected customer data requires additional approval in the Partner Dashboard.",
-        "status": "inferred",
+        "text": "Apps that use customer data must meet Shopify's protected customer data requirements and apply for access in the Partner Dashboard (API access requests > Protected customer data access).",
+        "status": "verified",
         "sourceIds": [
           "S5"
         ],
-        "quote": null
+        "quote": "If your app uses customer data, then you need to meet the protected customer data requirements … and then apply for access to this data in the API access requests > Protected customer data access section of your Partner Dashboard."
       }
     ],
     "publishedTimeline": {
@@ -61,21 +60,30 @@
   "prerequisites": [
     {
       "kind": "account",
-      "text": "A Shopify Partner account is required to access the Dev Dashboard.",
+      "text": "A Partner organization isn't needed to use the Dev Dashboard: merchants, and developers building for their company's own stores, open it from the Shopify admin. Apps created there are custom apps for that organization's stores.",
       "status": "verified",
       "sourceIds": [
-        "S5"
+        "S8"
       ],
-      "quote": "1. Log in to your Dev Dashboard."
+      "quote": "You don't need a Partner organization to use the Dev Dashboard. If you're a merchant, or a developer building for your company's own stores, then open it from the Shopify admin. … Apps that you create there are custom apps"
     },
     {
       "kind": "other",
-      "text": "A development store is needed to test app installation, OAuth flows, and billing.",
+      "text": "A development store to test the app on; if you don't have one, you can create one.",
       "status": "verified",
       "sourceIds": [
         "S5"
       ],
-      "quote": "Development stores can be used to test apps to ensure they're free of bugs or otherwise incomplete."
+      "quote": "Development stores can be used to test apps to ensure they're free of bugs or otherwise incomplete. If you don’t have a development store, then you can create one"
+    },
+    {
+      "kind": "account",
+      "text": "Distribution to the Shopify App Store is still handled in the Partner Dashboard, so listing the app publicly goes through a Partner organization.",
+      "status": "verified",
+      "sourceIds": [
+        "S8"
+      ],
+      "quote": "To list your app on the Shopify App Store, refer to About distribution … Distribution is still in the Partner Dashboard."
     }
   ],
   "console": {
@@ -85,17 +93,17 @@
   },
   "redirectRules": [
     {
-      "text": "Allowed redirection URLs must be configured in the Dev Dashboard or app configuration file.",
+      "text": "Before submitting, the app's App URL and allowed redirection URL must send merchants to the OAuth grant screen as expected.",
       "status": "verified",
       "sourceIds": [
         "S5"
       ],
-      "quote": "Check your app URL and your redirect URLs."
+      "quote": "Before submitting your app, make sure its App URL and allowed redirection URL redirect merchants to the OAuth screen as expected."
     }
   ],
   "scopes": {
     "model": {
-      "text": "Access scopes define permissions granted to an access token, determining what the app can read and write.",
+      "text": "An access scope is a named unit of access that a merchant grants the app, such as read_products or write_orders.",
       "status": "verified",
       "sourceIds": [
         "S4"
@@ -134,38 +142,38 @@
   },
   "steps": [
     {
-      "title": "Create a Shopify Partner Account",
-      "action": "Sign up for a Shopify Partner account to gain access to the Dev Dashboard.",
-      "where": "Shopify Partner Signup",
+      "title": "Open the Dev Dashboard in the right organization",
+      "action": "For an app used only on your own company's stores, open the Dev Dashboard from the Shopify admin (click your store name, then View Dev Dashboard). To list the app on the Shopify App Store, work in a Partner organization, because distribution is in the Partner Dashboard.",
+      "where": "Shopify admin, or a Partner organization",
       "link": "https://www.shopify.com/partners",
       "actor": "human_only",
       "actorReason": "Creating accounts requires human identity and legal agreement.",
-      "text": "Register for a Shopify Partner account to begin building apps.",
-      "status": "inferred",
+      "text": "Merchants and developers building for their company's own stores open the Dev Dashboard from the Shopify admin; no Partner organization is needed.",
+      "status": "verified",
       "sourceIds": [
-        "S5"
+        "S8"
       ],
-      "quote": null,
+      "quote": "You don't need a Partner organization to use the Dev Dashboard. If you're a merchant, or a developer building for your company's own stores, then open it from the Shopify admin.",
       "linkSeenInSources": true
     },
     {
-      "title": "Create an App in the Dev Dashboard",
-      "action": "Navigate to Apps, click create app, and configure your app name and settings.",
+      "title": "Create the app in the Dev Dashboard",
+      "action": "In the Dev Dashboard, create the app. Shopify suggests this path (rather than Shopify CLI) for automation or API-only apps with no UI in the Shopify admin.",
       "where": "Shopify Dev Dashboard",
       "link": "https://dev.shopify.com/dashboard",
       "actor": "human_only",
       "actorReason": "Developer console actions require a logged-in human user.",
-      "text": "Log in to your Dev Dashboard, click Apps, and navigate to the App overview page.",
+      "text": "The Dev Dashboard is the path Shopify suggests for automation or API-only apps with no UI in the Shopify admin.",
       "status": "verified",
       "sourceIds": [
-        "S5"
+        "S8"
       ],
-      "quote": "1. Log in to your Dev Dashboard. 2. Click Apps. 3. Click the name of your app to navigate to the App overview page.",
+      "quote": "Best for automation or API-only apps with no UI in the Shopify admin.",
       "linkSeenInSources": true
     },
     {
-      "title": "Configure Redirect URIs and Scopes",
-      "action": "Set your app URL and allowed redirection URLs in the app configuration.",
+      "title": "Check the app URL and redirect URLs",
+      "action": "In the Dev Dashboard, open Apps, your app, Versions, then the active version, and check the app URL and redirect URLs. The Composio redirect URI is added in a later step.",
       "where": "Shopify Dev Dashboard",
       "link": "https://dev.shopify.com/dashboard",
       "actor": "agent_assists",
@@ -245,12 +253,12 @@
       "link": "https://dev.shopify.com/dashboard",
       "actor": "human_only",
       "actorReason": "Submitting applications for formal review is a human-only administrative action.",
-      "text": "Submit your app for approval by the Shopify app review team after meeting all requirements.",
+      "text": "Once the app meets all requirements, submit it for review by the Shopify app review team.",
       "status": "verified",
       "sourceIds": [
         "S5"
       ],
-      "quote": "submit your app for approval",
+      "quote": "If you've followed all of the requirements to create your app, then you're ready to submit your app for review by the Shopify app review team.",
       "linkSeenInSources": true
     }
   ],
@@ -263,7 +271,7 @@
       "Guiding the developer through setting up allowed redirection URLs in the Dev Dashboard"
     ],
     "humanOnly": [
-      "Registering a Shopify Partner account",
+      "Choosing the organization (your own store's admin, or a Partner organization for App Store distribution)",
       "Creating apps and retrieving Client IDs and Secrets in the Dev Dashboard",
       "Entering credentials into the Composio dashboard",
       "Installing apps on development stores and submitting for formal review"
@@ -272,30 +280,51 @@
   "risks": [
     {
       "kind": "blocker",
-      "text": "Public apps must use expiring offline access tokens; non-expiring tokens will be blocked from API requests starting April 1, 2027.",
+      "text": "New public apps can't use non-expiring offline access tokens for GraphQL Admin API requests, so the integration must handle expiring offline tokens and refresh them.",
       "status": "verified",
       "sourceIds": [
         "S6"
       ],
-      "quote": "Public apps that still use non-expiring offline access tokens are delisted and blocked from new installs on January 1, 2027. Their GraphQL Admin API and REST Admin API requests are rejected from April 1, 2027."
+      "quote": "Non-expiring offline tokens grant permanent access until the app is uninstalled or the secret is revoked. New public apps already can't use them for GraphQL Admin API requests."
     },
     {
       "kind": "review",
-      "text": "Submitting incomplete apps or apps with broken billing or installation flows will result in rejection and require resubmission.",
+      "text": "Apps that are incomplete or have errors that prevent Shopify from reviewing their features won't be approved.",
       "status": "verified",
       "sourceIds": [
         "S5"
       ],
       "quote": "If you submit an app that is incomplete or has errors that prevent us from reviewing its features, then it won't be approved."
+    },
+    {
+      "kind": "limit",
+      "text": "Existing public apps that still use non-expiring offline tokens are delisted and blocked from new installs on 1 January 2027, and their Admin API requests are rejected from 1 April 2027. This doesn't apply to custom apps or apps created by merchants.",
+      "status": "verified",
+      "sourceIds": [
+        "S6"
+      ],
+      "quote": "Public apps that still use non-expiring offline access tokens are delisted and blocked from new installs on January 1, 2027. Their GraphQL Admin API and REST Admin API requests are rejected from April 1, 2027. This doesn't apply to custom apps or apps created by merchants."
+    },
+    {
+      "kind": "review",
+      "text": "Re-submitting the app slows down the review process.",
+      "status": "verified",
+      "sourceIds": [
+        "S5"
+      ],
+      "quote": "Resubmitting your app slows down the review process."
     }
   ],
   "unresolved": [
-    "What is the exact business day review timeline for Shopify app review submissions?"
+    "Shopify's review turnaround time was not found in the retrieved pages.",
+    "If your users connect stores your organization doesn't own, a custom app made in your own organization may not be enough; Shopify's About distribution page, which explains distribution types, was not retrieved.",
+    "Whether custom apps made for your own stores go through any review is not stated in the retrieved pages."
   ],
   "nextActions": [
-    "Create a Shopify Partner account and Dev Dashboard profile.",
-    "Register your Shopify app and obtain your Client ID and Client Secret.",
-    "Configure custom credentials in the Composio dashboard and link the redirect URI."
+    "Decide whether the app will only be used on stores your organization owns (custom app from the Shopify admin) or listed on the Shopify App Store (Partner organization).",
+    "Create the app in the Dev Dashboard and copy its client ID and client secret.",
+    "Create a custom auth config in Composio and add its redirect URI to the app's allowed redirection URLs.",
+    "Use expiring offline access tokens if the app is public."
   ],
   "meta": {
     "query": "shopify",
@@ -403,6 +432,16 @@
       "retrievedAt": "2026-11-11T08:14:34.805Z",
       "chars": 30000,
       "truncated": true
+    },
+    {
+      "id": "S8",
+      "url": "https://shopify.dev/docs/apps/build/dev-dashboard",
+      "title": "Dev Dashboard (added during the manual audit 2026-11-11)",
+      "kind": "provider_page",
+      "authority": "official",
+      "retrievedAt": "2026-11-11T12:49:51.223Z",
+      "chars": 9762,
+      "truncated": false
     }
   ],
   "log": {
@@ -545,14 +584,119 @@
         "path": "steps[6]",
         "change": "inferred → verified",
         "reason": "re-checked on 2026-11-11 after a quote-matching fix: the quote is in S5 (page retrieved again on that date)"
+      },
+      {
+        "path": "sources[S8]",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Retrieved during the audit to check the Partner-account prerequisite. Not part of the original pipeline run."
+      },
+      {
+        "path": "authMethod",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The previous quote was Composio's description of the toolkit and did not mention any grant type."
+      },
+      {
+        "path": "externalReview.summary",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The previous quote only said to test before submitting; it did not say a review is mandatory, and the claim said 'public apps' where the page covers App Store submissions."
+      },
+      {
+        "path": "externalReview.triggers[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "Narrowed from 'distributing publicly' to App Store submission, which is what the page covers."
+      },
+      {
+        "path": "externalReview.triggers[1]",
+        "change": "manual audit 2026-11-11: inferred → verified",
+        "reason": "The cited page states this directly; upgraded with the quote."
+      },
+      {
+        "path": "prerequisites[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "Wrong: the claim said a Partner account is required for the Dev Dashboard, supported only by the quote 'Log in to your Dev Dashboard'. Shopify's Dev Dashboard page says a Partner organization isn't needed."
+      },
+      {
+        "path": "prerequisites[2]",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Keeps the part of the old claim that holds: App Store distribution, not app creation, needs the Partner Dashboard."
+      },
+      {
+        "path": "prerequisites[1]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The claim said a development store is 'needed' for OAuth and billing tests; the page says development stores 'can be used' to test."
+      },
+      {
+        "path": "redirectRules[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The quote 'Check your app URL and your redirect URLs' did not support 'must be configured in the Dev Dashboard or app configuration file'."
+      },
+      {
+        "path": "scopes.model",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "Reworded to say only what the quote says."
+      },
+      {
+        "path": "steps[0]",
+        "change": "manual audit 2026-11-11: inferred → verified",
+        "reason": "Replaces 'Create a Shopify Partner Account', which contradicted Shopify's Dev Dashboard documentation."
+      },
+      {
+        "path": "steps[1]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The previous quote described opening an existing app's overview page, not creating an app."
+      },
+      {
+        "path": "steps[2]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "Title no longer mentions scopes, which the quote does not cover."
+      },
+      {
+        "path": "steps[7]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The previous quote was the four-word fragment 'submit your app for approval'."
+      },
+      {
+        "path": "risks[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old claim cited the 2027 cut-off dates but dropped two qualifications: new public apps already can't use non-expiring tokens, and the dates don't apply to custom or merchant-created apps."
+      },
+      {
+        "path": "risks[2]",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Split from risks[0] with the exemption the old claim left out."
+      },
+      {
+        "path": "risks[1]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old claim added 'broken billing' as a rejection cause requiring resubmission; Shopify's own table says billing problems do not require a re-submit."
+      },
+      {
+        "path": "risks[3]",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Stated on the cited page."
+      },
+      {
+        "path": "difficulty.rationale",
+        "change": "manual audit 2026-11-11: rewritten",
+        "reason": "No longer assumes billing integration (only relevant to paid apps) or that every app is publicly reviewed."
+      },
+      {
+        "path": "handsOnEffort.basis",
+        "change": "manual audit 2026-11-11: rewritten",
+        "reason": "No longer assumes creating a Partner account."
+      },
+      {
+        "path": "nextActions, unresolved, division",
+        "change": "manual audit 2026-11-11: rewritten",
+        "reason": "Removed the Partner-account requirement and added the distribution question it hid."
       }
     ],
     "counts": {
-      "verified": 16,
-      "inferred": 2,
+      "verified": 21,
+      "inferred": 0,
       "unknown": 1
     },
     "thirdPartyOnly": [],
-    "officialPagesRead": 4
+    "officialPagesRead": 5
   }
 }

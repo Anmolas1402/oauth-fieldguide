@@ -55,12 +55,16 @@ to verbatim but were not checked character by character.
 All four guides were produced by the app's own pipeline on the free Gemini tier. Search was blocked
 for most queries (see section 4), so most pages were fetched from URLs the model proposed directly.
 
-| Provider | Model used | Official pages read | Claims (verified / inferred / unknown) | Validator adjustments |
-|---|---|---|---|---|
-| GitHub (re-run) | gemini-3.6-flash | 4 | 13 / 1 / 1 | 6 |
-| Gmail | gemini-3.1-flash-lite | 5 | 13 / 2 / 0 | 2 |
-| Slack | gemini-3.5-flash-lite | 4 | 12 / 3 / 1 | 4 |
-| Shopify (re-run) | gemini-3.6-flash, then 3.5-flash-lite | 4 | 16 / 2 / 1 | 7 |
+| Provider | Model used | Official pages read | Claims as generated (V / I / U) | Validator adjustments | After the 11 Nov audit (V / I / U) | Audit corrections |
+|---|---|---|---|---|---|---|
+| GitHub (re-run) | gemini-3.6-flash | 4 | 13 / 1 / 1 | 6 | 14 / 1 / 1 | 8 |
+| Gmail | gemini-3.1-flash-lite | 5 | 13 / 2 / 0 | 2 | 17 / 1 / 0 | 16 |
+| Slack | gemini-3.5-flash-lite | 4 | 12 / 3 / 1 | 4 | 14 / 3 / 1 | 13 |
+| Shopify (re-run) | gemini-3.6-flash, then 3.5-flash-lite | 4 (+1 added in the audit) | 16 / 2 / 1 | 7 | 21 / 0 / 1 | 21 |
+
+The saved guides are what the pipeline produced, corrected by the manual audit in item 18 below.
+Every correction is stored in the guide's validator adjustments with the prefix
+"manual audit 2026-11-11" and is visible in the app, so the generated version can be reconstructed.
 
 Where the pipeline and the independent check agree:
 
@@ -85,14 +89,17 @@ Where the pipeline fell short of the independent check:
   retrieved documentation" for this reason, but the gap is real: the page budget is small.
 - **Slack's 2025 rate limits for non-Marketplace apps** (1 request a minute on `conversations.history`
   for commercially distributed apps) are missing from the guide for the same reason.
-- **GitHub** still does not mention organisation OAuth app access restrictions, which the independent
-  check found (new organisations block OAuth apps until an owner approves them).
+- **GitHub** does not cover organisation OAuth app access restrictions, which the independent
+  check found (new organisations block OAuth apps until an owner approves them). The audit added this
+  to the guide's unresolved questions rather than as a claim, because no page the run retrieved
+  states it.
 - **Shopify's re-run read fewer pages than its first run** (4 against 8). It gained the full path
   (8 steps, including a development-store test and review submission) and a new verified blocker
   (public apps must move to expiring offline tokens), but lost the protected-customer-data and
   secret-rotation risks the first run had. Its first step, "Create a Shopify Partner Account", is
   marked *inferred*, and Shopify's Dev Dashboard page says the opposite ("You don't need a Partner
-  organization to use the Dev Dashboard"). The label did its job; the step is still wrong.
+  organization to use the Dev Dashboard"). The label did its job; the step was still wrong.
+  **Corrected in the audit (item 18).**
 
 **Run-to-run variance.** GitHub and Shopify were each run twice (10 and 11 November). Facts quoted
 from pages were stable. The judgement fields were not: Shopify's difficulty went from medium to
@@ -180,6 +187,76 @@ same pages):
     the cited pages, found each full quote, restored the claims, and recorded each restoration with
     its date. It restored nothing in the Gmail and Slack guides, where the rejections stand.
 
+18. **Manual audit of every verified claim (11 November).** Prompted by an outside review. Each of
+    the 54 verified claims in the four saved guides was read against its cited page, retrieved again
+    that day. The standard was that the quote must support the whole claim, not just appear on the
+    page. Result: 19 held (two of them reworded for clarity only); 35 overstated or misread their quote; 2 of those had no
+    supporting text on the retrieved pages and were downgraded to inferred (Gmail's Google-account
+    prerequisite, whose quote is about running code samples; Slack's "test the connection" step).
+    The rest were rewritten to say only what the quote says, split where a quote covered one part of
+    a compound claim, or given a better quote from the same page. Examples:
+    - **Shopify, wrong:** "A Shopify Partner account is required to access the Dev Dashboard",
+      backed by the quote "Log in to your Dev Dashboard". Shopify's Dev Dashboard page says "You don't
+      need a Partner organization to use the Dev Dashboard": merchants open it from the Shopify
+      admin, and apps made there are custom apps for their own stores. App Store *distribution* is
+      still in the Partner Dashboard. Step 1 and the prerequisites were rewritten. That page was
+      retrieved during the audit and added as source S8, labelled as added in the audit; it was not
+      part of the pipeline run.
+    - **Shopify, missing qualifications:** the token risk gave the 2027 cut-off dates but dropped
+      that new public apps already cannot use non-expiring tokens for GraphQL Admin API requests,
+      and that the dates do not apply to custom or merchant-created apps. Split into two claims with
+      both qualifications.
+    - **Shopify, wrong cause:** "apps with broken billing … require resubmission". Shopify's own table
+      says billing problems do not require a re-submit; installation, embedding, UI and testing
+      problems do.
+    - **Shopify, review scope:** "Public apps … must pass review" became "Apps submitted to the
+      Shopify App Store are reviewed", which is what the page covers. Whether custom apps for your own
+      stores are reviewed is now an open question.
+    - **Gmail:** the review requirement was "always"; Google says verification applies to public apps
+      using certain scopes, and apps in development, testing or staging are not subject to it. Now
+      "conditional", with the 100-user cap and unverified-app screen added as a quoted limit.
+    - **Slack:** missing step added: to let other workspaces (your Composio users) install the app,
+      public distribution must be activated under Manage Distribution, quoted from Slack's
+      distribution page. The workspace-restriction risk now cites Slack's own page instead of a
+      sentence fragment from Composio's.
+    - **Fragments:** several quotes were two to four words ("App Management page", "Click CREATE
+      CLIENT", "submit your app for approval") standing in for whole steps. Each now has a quote
+      covering the step, or the claim was cut down to what the fragment says.
+    Five claims went the other way (inferred to verified) because the cited page states them
+    directly, for example Shopify's protected-customer-data access request. After the corrections,
+    `scripts/audit-2026-11-11.ts` retrieved every cited page again and checked every verified quote
+    with the pipeline's own matcher; it refuses to write if any quote is missing. All passed.
+    **What this says about the product:** the automated check proves a quote is on the page, not
+    that it supports the claim. The UI's definition of "verified" now says exactly that, and one
+    targeted rule was added (item 23). Live runs are not hand-audited.
+19. **Shopify served the same page as HTML on one request and Markdown on the next** (13,139 and
+    9,705 characters). Markdown link syntax, `[text](url)`, broke exact matching of multi-part quotes.
+    Quote matching now keeps a link's visible text and drops its target in both formats.
+20. **A hanging model cost four minutes per guide.** `gemini-3.8-flash` sometimes holds the connection
+    open instead of returning 503. The guide-writing request waited for its full 240-second timeout
+    before falling back (`npm run check-model`: 241 s). That request is now streamed. A model that
+    sends nothing within 45 seconds, or stalls for 60 seconds, is dropped for the next one. A model
+    that failed is skipped for 10 minutes across investigations, and the guide records each skip and
+    its reason. The same check then took 116 s with the deadline at 90 s; the deadline was then cut
+    to 45 s and the skip added.
+21. **DNS-level SSRF.** `fetch_page` rejected IP literals and internal-looking names but would fetch
+    a public-looking name that resolves to a private address. For example, `localtest.me` resolves to
+    `::1`. Every hop's DNS answers are now checked, and the connection uses a lookup that refuses
+    loopback, private, link-local (including 169.254.169.254), CGNAT, multicast, documentation,
+    IPv4-mapped and NAT64 ranges. That second check covers DNS rebinding. `localtest.me` is now
+    refused, and the rule has regression tests.
+22. **The rate limiter trusted client-supplied headers.** It keyed on `CF-Connecting-IP`, else the
+    leftmost `X-Forwarded-For` entry. A client can set both, so anyone could bypass the 6-per-hour
+    limit by changing a header. It now uses the entry appended by the trusted proxy (one hop on
+    Render, configurable) or the socket address, and ignores `CF-Connecting-IP`.
+23. **Absence claims.** A live Linear run marked "There is no mandatory review process" as verified,
+    with a quote that only lists distribution modes. A verified claim that something is absent or
+    not required is now downgraded unless its quote contains a negation. Run against the audited
+    guides, the rule flags no claim that the audit kept.
+24. **A replayed cached result that failed to parse** closed the stream with no terminal event; the
+    client showed "connection closed". The server now sends an error event, and a test checks that
+    every stream ends with exactly one terminal event.
+
 ## 5. Deployment check
 
 Deployed to Render (free plan) from `render.yaml` on 11 November 2026:
@@ -193,13 +270,60 @@ https://oauth-fieldguide.onrender.com. Checked against production, not localhost
   5 inferred and 1 unknown claims, and 5 validator adjustments. It ran on `gemini-3.5-flash-lite`
   because the three larger models were overloaded or out of their daily quota.
 
+### Live runs on providers that are not examples (11 November)
+
+Run locally with `npx tsx scripts/live-run.ts <provider>`, the same pipeline the server uses, on the
+free Gemini key. Each run's full record (stages, searches, every page fetched, model, gaps, and the
+guide) is in `evidence/live-runs/`. These guides were **not** hand-audited; the notes below come from
+reading them once.
+
+| | Linear | Calendly |
+|---|---|---|
+| Outcome | Guide produced | Guide produced, flagged **incomplete** (1 gap) |
+| Time | 139 s | 189 s |
+| Composio | Managed OAuth available; own app optional | Managed OAuth available; own app optional |
+| Search | 1 search, 8 results | 1 search, 8 results |
+| Official pages read | 5 (`linear.app/developers/...`), 0 failures | 6 (`developer.calendly.com/...`, found via its `llms.txt`), 0 failures |
+| Model calls | 5. Research on gemini-3.6-flash (3.8-flash returned 503); guide written on gemini-3.1-flash-lite | 6. 3.8-flash 504, 3.6-flash and 3.5-flash 429; ran on gemini-3.5-flash-lite |
+| Claims (V / I / U) | 10 / 2 / 1, 1 validator adjustment | 13 / 3 / 0, 2 validator adjustments |
+| Steps | 5 | 5 |
+| Review | "none" | unknown; that is the gap the banner names |
+
+Incomplete or weak guidance in these runs:
+
+- **Linear:** "There is no mandatory review process for private or public apps" was marked verified
+  with a quote that only lists the private and public distribution modes. That led to the absence
+  rule (item 23), which now downgrades that claim. The step quote "Create a new OAuth2 Application"
+  is a heading, not instructions. Both risks are about client-credentials tokens, which matter less
+  to a Composio user-authorization flow than anything about the authorization code flow. The
+  Composio step's quote was rejected by the validator (it paraphrased Composio's list).
+- **Calendly:** a rate-limit claim gives both the paid (500/min) and free (50/min) limits but quotes
+  only the paid one, the same compound-claim problem the audit found. Review status could not be
+  established, so the guide shows the incomplete banner. Useful finding: Calendly allows exactly one
+  redirect URI per OAuth app (quoted), which matters if the same app is also used outside Composio.
+- **Quota:** by the second run, two of the five Gemini models had used their daily free quota. Both
+  guides were written by the Lite models, which the README already says produce thinner guides.
+
+Both runs used the code as it stood when they started. The absence rule (item 23) and the per-model
+skip reasons in the guide-writing stage were added while Calendly was running, so neither record
+shows them.
+
 ## 6. Still uncertain
 
 - **Xero.** `developer.xero.com/documentation/...` returns 39 characters to this tool, so Xero's main
   docs could not be read. The second Xero run read Xero's FAQ pages and its official Python SDK
   instead. Whether the docs need JavaScript or reject automated clients was not established.
 - **Search reliability from a server.** DuckDuckGo and Brave blocked most queries from this machine
-  after the first few. A cloud host's IP may fare worse.
+  after the first few. A cloud host's IP may fare worse. The research prompt now tells the model to
+  read a docs site's `llms.txt` when search fails: Slack, Zoom, Calendly and GitHub publish one;
+  Shopify, Linear and Xero did not (checked 11 November). The Calendly run found its pages that way.
+- **Live runs are not hand-audited.** The four saved guides were checked claim by claim (item 18). A
+  fresh live run gets only the automated checks, which confirm a quote is on the page and catch
+  unsupported absence claims, but not compound claims backed by a quote for one part.
+- **Shopify distribution for Composio users.** A custom app made in your own organization only
+  installs on that organization's stores. If your users connect stores you don't own, a different
+  distribution type is likely needed. Shopify's "About distribution" page was not retrieved, so the
+  guide lists this as an open question rather than an answer.
 - **Google's CASA security assessment cost.** Not stated on any page read.
 - **Shopify App Store review timeline and registration fee.** Not stated on the official pages read.
 - **Slack's dates for applying the new rate limits to existing non-Marketplace installs.** A search
@@ -214,3 +338,10 @@ https://oauth-fieldguide.onrender.com. Checked against production, not localhost
   to saved guides, and records each change as applied afterwards.
 - `npx tsx scripts/recheck-quotes.ts [--write]` re-checks downgraded quotes in saved guides against
   freshly retrieved pages after a matcher change, and records any restoration.
+- `npx tsx scripts/audit-2026-11-11.ts` replays the manual audit's corrections in memory, retrieves
+  every cited page again and checks every verified quote. It skips guides already audited, so run
+  it against the guides at commit `0aa920a` to see it apply.
+- `npx tsx scripts/live-run.ts <provider>` runs one real investigation and writes its full record to
+  `evidence/live-runs/`.
+- `npx tsx scripts/probe-models.ts` shows which Gemini models answer right now, and why the others
+  don't (quota, overload, timeout), with a 25-second limit per model.

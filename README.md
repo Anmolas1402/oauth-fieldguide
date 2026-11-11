@@ -78,8 +78,8 @@ To regenerate one: `npm run save-guide -- github` (add `--fresh` to ignore reusa
 browser ── POST /api/investigate ──> server (Hono, Node)
    ^                                   1 resolve   match the name against Composio's public catalogue
    └──── NDJSON events, live ────────  2 composio  read the toolkit page: auth schemes, managed yes/no
-                                       3 research  Claude + web search + fetch_page tool (real HTTP)
-                                       4 compose   Claude, structured output against a Zod schema
+                                       3 research  model (Gemini by default) + web search + fetch_page (real HTTP)
+                                       4 compose   model, structured output against a Zod schema
                                        5 verify    deterministic cross-check, no model involved
 ```
 
@@ -93,12 +93,16 @@ browser ── POST /api/investigate ──> server (Hono, Node)
     Search, so no search key is needed. The app identifies itself with its own User-Agent. A bot-check
     page counts as a failure (not "no results"), the blocking engine is skipped for 10 minutes, and
     every failure is shown in the progress view and log. Nothing tries to get past a block.
-  - `fetch_page` (`server/fetchPage.ts`): https only, public hosts only, redirects re-checked, 30,000
-    characters per page.
+  - `fetch_page` (`server/fetchPage.ts`): https only, no IP literals or credentials in the URL, 30,000
+    characters per page. Every hop, including redirects, has its DNS answers checked, and the
+    connection itself goes through a lookup that refuses private, loopback, link-local and other
+    non-public addresses (`server/netguard.ts`), so a public-looking name that resolves to an internal
+    address, or changes its answer between checks, is not fetched.
   Budgets: at most 6 searches, 9 pages, 8 model turns. The server keeps the text of every page it
   retrieved. If search is blocked, the model is told to fetch official documentation URLs directly.
-- **The model is behind a small driver** (`server/llm.ts`): Gemini or Claude, with the same tools and
-  prompts. On Gemini it tries `gemini-3.8-flash`, `3.6-flash`, `3.5-flash`, `3.5-flash-lite`, then
+- **The model is behind a small driver** (`server/llm.ts`). Gemini is the default and is what produced
+  every saved guide and every live run recorded in EVIDENCE.md. A Claude driver with the same tools and
+  prompts is included but has never been run against the live API (no Anthropic key was available). On Gemini it tries `gemini-3.8-flash`, `3.6-flash`, `3.5-flash`, `3.5-flash-lite`, then
   `3.1-flash-lite`, moving on when one is overloaded, out of quota or times out, and stays on the one
   that answers. The guide records the model actually used.
 - **Unfinished research is reused.** If the guide-writing step fails, the retrieved pages are kept for
@@ -111,6 +115,8 @@ browser ── POST /api/investigate ──> server (Hono, Node)
 - **Stage 5** (`server/verify.ts`) is plain code:
   - a "verified" claim needs a cited, retrieved page and a quote found in that page's text, otherwise
     it becomes "inferred";
+  - a verified claim that says something is absent or not required ("no review", "not needed") is
+    downgraded unless its quote also contains a negation;
   - citations to ids that were never retrieved are removed;
   - a review duration that is not verified is deleted and replaced with "no timeline published";
   - scope strings and console links are flagged when they do not appear in any retrieved page;
@@ -119,6 +125,10 @@ browser ── POST /api/investigate ──> server (Hono, Node)
   - each source is labelled official, Composio or third-party from its hostname, verified claims that
     rest only on third-party pages are counted, and a guide with no official page shows a warning.
   Every change is listed in the guide under "Validator adjustments".
+- **Incomplete investigations are labelled.** A guide shows an "Incomplete investigation" banner (and
+  the Markdown export a matching note) when no or only one official page was read, when fewer than
+  half the setup steps are backed by a quote, when there are fewer than three steps, or when it could
+  not establish whether the provider reviews apps (`investigationGaps` in `shared/derive.ts`).
 
 ### Layout
 
@@ -147,6 +157,7 @@ evidence/  the independent documentation check behind EVIDENCE.md
 | `API_PORT` | no | `8787` | API port in `npm run dev` |
 | `RATE_LIMIT_PER_HOUR` | no | `6` | Live investigations per IP per hour |
 | `DAILY_LIVE_RUN_CAP` | no | `60` | Live investigations per day across all users |
+| `TRUSTED_PROXY_HOPS` | no | `1` on Render, else `0` | How many X-Forwarded-For entries, counted from the right, were added by proxies you control. The rate limit uses that entry; with `0` it uses the socket address and ignores the header |
 
 No Composio key is needed. No provider OAuth credentials are used anywhere.
 
@@ -164,6 +175,14 @@ that allows a streaming response to stay open for a few minutes.
 - **Anything that runs a container:** `Dockerfile` is included (listens on `$PORT`, default 8080).
 
 ## Limitations
+
+- **"Verified" means the quote is on the page, not that it proves the whole claim.** Code checks that
+  the quote appears on the cited page and catches unsupported "not required" claims; it does not
+  check that a quote supports every part of a claim. A manual audit on 11 November found that 35 of
+  54 verified claims in the four saved guides overstated their quotes (for example, a claim with
+  three parts backed by a quote for one). Those guides were corrected by hand and every correction is
+  recorded in the guide (EVIDENCE.md, item 18). Fresh live runs get only the automated checks, so
+  read the quote behind any claim you will act on.
 
 - **Search depends on public results pages.** DuckDuckGo and Brave both block automated requests
   some of the time. When both are blocked the investigation continues by fetching documentation

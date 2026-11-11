@@ -107,13 +107,13 @@
   },
   "steps": [
     {
-      "title": "Evaluate Managed vs Custom Auth",
+      "title": "Decide: Composio-managed app or your own",
       "action": "Decide whether to use Composio Managed Auth or register a custom OAuth app.",
       "where": "Composio Dashboard",
       "link": "https://dashboard.composio.dev/~/project/auth-configs",
       "actor": "agent_prepares",
       "actorReason": "An agent can check whether managed auth or custom credentials fit your branding and scope requirements.",
-      "text": "Composio provides managed OAuth for GitHub by default, but custom configs can be created for custom branding or specific scopes.",
+      "text": "Composio can provide the OAuth app that your users authorize when they connect a toolkit.",
       "status": "verified",
       "sourceIds": [
         "S2"
@@ -128,12 +128,12 @@
       "link": "https://github.com/settings/developers",
       "actor": "agent_assists",
       "actorReason": "Requires logged-in interaction within the developer's GitHub account.",
-      "text": "From GitHub profile settings, open Developer settings in the left sidebar and select OAuth apps.",
+      "text": "In Settings, click Developer settings in the left sidebar, then OAuth apps.",
       "status": "verified",
       "sourceIds": [
         "S4"
       ],
-      "quote": "In the left sidebar, click Developer settings.",
+      "quote": "In the left sidebar, click Developer settings. 3. In the left sidebar, click OAuth apps.",
       "linkSeenInSources": false
     },
     {
@@ -143,12 +143,12 @@
       "link": null,
       "actor": "agent_assists",
       "actorReason": "Requires entering app details in the user's GitHub developer portal.",
-      "text": "Enter the public application name and full website homepage URL.",
+      "text": "Enter the application name and the full URL of your app's website.",
       "status": "verified",
       "sourceIds": [
         "S4"
       ],
-      "quote": "In Application name, type the name of your app.",
+      "quote": "In \"Application name\", type the name of your app. … In \"Homepage URL\", type the full URL to your app's website.",
       "linkSeenInSources": false
     },
     {
@@ -158,22 +158,22 @@
       "link": "https://dashboard.composio.dev/~/project/auth-configs",
       "actor": "agent_assists",
       "actorReason": "Requires retrieving callback URI from Composio and pasting into GitHub settings.",
-      "text": "Enter the callback URL provided by Composio into GitHub's Authorization callback URL field.",
+      "text": "In Authorization callback URL, enter your app's callback URL; up to 10 callback URLs can be added.",
       "status": "verified",
       "sourceIds": [
         "S4"
       ],
-      "quote": "In Authorization callback URL, type the callback URL of your app.",
+      "quote": "In \"Authorization callback URL\", type the callback URL of your app. You can enter up to 10 callback URLs.",
       "linkSeenInSources": true
     },
     {
-      "title": "Save Application and Generate Client Secret",
-      "action": "Click 'Register application' and generate a Client Secret.",
+      "title": "Register the app and get its credentials",
+      "action": "Click Register application. Then copy the Client ID and generate a client secret on the app's page (the retrieved GitHub pages describe registering the app, not generating the secret).",
       "where": "GitHub OAuth App details page",
       "link": null,
       "actor": "human_only",
       "actorReason": "Generating and viewing secret keys must be performed directly by the account owner.",
-      "text": "Register the app, copy the Client ID, and generate a new Client Secret.",
+      "text": "Finish by clicking Register application.",
       "status": "verified",
       "sourceIds": [
         "S4"
@@ -239,16 +239,27 @@
     },
     {
       "kind": "security",
-      "text": "When token expiration is configured, access tokens expire after eight hours and refresh tokens expire after six months without use.",
+      "text": "When the app uses expiring tokens, access tokens expire after eight hours and refresh tokens after six months without use.",
       "status": "verified",
       "sourceIds": [
         "S6"
       ],
       "quote": "The access token expires after eight hours, and the refresh token expires after six months without use."
+    },
+    {
+      "kind": "security",
+      "text": "Expiring user access tokens are enabled by default when you create an OAuth app; unchecking the box is only advised until the app's authentication code supports short-lived tokens.",
+      "status": "verified",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": "Expire user access tokens is enabled by default. If your app's authentication code hasn't been updated to support short-lived tokens, uncheck the box until support is added."
     }
   ],
   "unresolved": [
-    "Confirm whether repository access needs fine-grained permissions, which would require building a GitHub App rather than an OAuth app."
+    "Confirm whether repository access needs fine-grained permissions, which would require building a GitHub App rather than an OAuth app.",
+    "Organizations can restrict which OAuth apps may access their data; whether target organizations need an owner to approve the app was not checked in this investigation.",
+    "Whether Composio's custom auth config refreshes GitHub's expiring user tokens was not checked."
   ],
   "nextActions": [
     "Determine whether Composio Managed Auth satisfies branding and scope requirements.",
@@ -570,10 +581,50 @@
         "path": "steps[6]",
         "change": "inferred → verified",
         "reason": "re-checked on 2026-11-11 after a quote-matching fix: the quote is in S3 (page retrieved again on that date)"
+      },
+      {
+        "path": "steps[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old text also claimed custom configs exist 'for custom branding or specific scopes', which the quote does not say."
+      },
+      {
+        "path": "steps[1]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "Quote extended to cover the OAuth apps click as well."
+      },
+      {
+        "path": "steps[2]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old quote covered only the application name, not the homepage URL."
+      },
+      {
+        "path": "steps[3]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old text said the callback URL is 'provided by Composio'; GitHub's page says only 'the callback URL of your app'. The Composio part stays in the action, where step 6 of the Composio flow supplies it."
+      },
+      {
+        "path": "steps[4]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old text also claimed the page explains copying the Client ID and generating a secret; it does not."
+      },
+      {
+        "path": "risks[1]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "Reworded; the quote is unchanged and supports it."
+      },
+      {
+        "path": "risks[2]",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Stated on the retrieved creation page and missed by the pipeline."
+      },
+      {
+        "path": "unresolved",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Two launch questions the audit found that the retrieved pages do not answer."
       }
     ],
     "counts": {
-      "verified": 13,
+      "verified": 14,
       "inferred": 1,
       "unknown": 1
     },

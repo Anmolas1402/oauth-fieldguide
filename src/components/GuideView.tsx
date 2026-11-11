@@ -5,6 +5,7 @@ import {
   REVIEW_LABEL,
   formatDate,
   guideKey,
+  investigationGaps,
   ownership,
 } from "../../shared/derive.ts";
 import { guideToChecklist, guideToMarkdown } from "../../shared/markdown.ts";
@@ -79,6 +80,7 @@ export function GuideView({
   const { done, toggle, reset } = useChecked(key);
   const [copied, setCopied] = useState<string | null>(null);
   const own = ownership(g.composio);
+  const gaps = investigationGaps(g);
   const counts = g.validation.counts;
   const total = counts.verified + counts.inferred + counts.unknown;
 
@@ -193,11 +195,15 @@ export function GuideView({
         </div>
       )}
 
-      {g.validation.officialPagesRead === 0 && (
-        <div className="mt-3 rounded-md border border-warn/30 bg-warn-soft px-4 py-2.5 text-sm text-warn">
-          <span className="font-medium">No official {g.provider.name} documentation could be read in this run. </span>
-          Claims rest on Composio's pages and third-party pages, marked with dashed source ids. Check them against the provider's
-          own docs before relying on them; the investigation log shows which official pages failed and why.
+      {gaps.length > 0 && (
+        <div role="status" className="mt-3 rounded-md border border-warn/30 bg-warn-soft px-4 py-2.5 text-sm text-warn">
+          <p className="font-medium">Incomplete investigation: treat this as a starting point, not a launch plan.</p>
+          <ul className="mt-1 list-disc pl-5">
+            {gaps.map((x) => (
+              <li key={x}>{x}</li>
+            ))}
+          </ul>
+          <p className="mt-1">Check these points against the provider's own docs. The investigation log shows which pages failed and why.</p>
         </div>
       )}
 

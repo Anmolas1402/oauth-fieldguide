@@ -5,7 +5,8 @@ export type VerifySource = { id: string; url: string; text: string; authority?: 
 const norm = (s: string) =>
   s
     .toLowerCase()
-    .replace(/\[https?:\/\/[^\]\s]+\]/g, " ") // link targets html-to-text appends after anchor text
+    .replace(/\[([^\]\n]*)\]\((?:https?:\/\/|\/|#)[^)\s]*\)/g, "$1") // Markdown links: keep the visible text
+    .replace(/\[(?:https?:\/\/|\/)[^\]\s]*\]/g, " ") // link targets html-to-text appends after anchor text
     .replace(/[‘’‚′]/g, "'")
     .replace(/[“”„″]/g, '"')
     .replace(/[‐-―]/g, "-")
@@ -61,6 +62,12 @@ export const DURATION_RE =
   /\b(\d+(\s*(-|to|–)\s*\d+)?|one|two|three|four|five|six|seven|eight|nine|ten|several|a few|couple of)\s+(business\s+|working\s+)?(minute|hour|day|week|month)s?\b/i;
 
 /** Verbs that mean acting inside an account (as opposed to researching or drafting). */
+/** Claim wording that asserts an absence or a non-requirement. */
+export const ABSENCE_RE = /\b(no|not|none|never|without|neither|nor|cannot|unnecessary|exempt)\b|n't\b/i;
+/** Quote wording that can support such a claim. */
+export const NEGATION_RE = /\b(no|not|none|never|without|neither|nor|cannot|unable|optional|exempt|unless|except|unlike)\b|n't\b/i;
+const straightApostrophes = (s: string) => s.replace(/[‘’‚′]/g, "'");
+
 export const CONSOLE_ACTION_RE = /\b(click|log ?in|sign ?in|sign up|paste|submit|install|authori[sz]e|enable|toggle|press|select .* in the (dashboard|console|portal))\b/i;
 
 export const NO_TIMELINE_TEXT =
@@ -114,6 +121,18 @@ export function verifyDraft(
               reason: `the quoted text was not found in the cited page: "${quote.length > 160 ? quote.slice(0, 160) + "…" : quote}"`,
             });
           }
+        }
+        // A claim that something is absent ("no review", "not required") needs a quote that says so.
+        // Finding the quote on the page proves only that the page says the quote, so this catches the
+        // most damaging way a real quote can fail to support its claim.
+        if (claim.status === "verified" && ABSENCE_RE.test(straightApostrophes(claim.text)) && !NEGATION_RE.test(straightApostrophes(quote))) {
+          claim.status = "inferred";
+          claim.quote = null;
+          adjustments.push({
+            path,
+            change: "verified → inferred",
+            reason: `the claim states that something is absent or not required, but the quote does not say so: "${quote.length > 160 ? quote.slice(0, 160) + "…" : quote}"`,
+          });
         }
       }
     } else {

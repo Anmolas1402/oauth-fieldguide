@@ -7,12 +7,12 @@
   },
   "oauthAppKind": "Google OAuth 2.0 Client",
   "authMethod": {
-    "text": "OAuth 2.0 authorization using client ID and client secret, with support for authorization code flows.",
+    "text": "The app uses an OAuth client to get access tokens from Google's OAuth 2.0 endpoint; creating the client gives a client ID and, for some client types, a client secret.",
     "status": "verified",
     "sourceIds": [
-      "S6"
+      "S7"
     ],
-    "quote": "OAuth 2.0 allows users to share specific data with an application while keeping their usernames, passwords, and other information private."
+    "quote": "Your OAuth client is the credential which your application uses when making calls to Google OAuth 2.0 endpoint to receive an access token or ID token. After creating your OAuth client, you will receive a client ID and sometimes, a client secret."
   },
   "difficulty": {
     "level": "high",
@@ -23,9 +23,9 @@
     "basis": "Assumes existing account setup; additional time required for compliance documentation and potential verification wait times."
   },
   "externalReview": {
-    "requirement": "always",
+    "requirement": "conditional",
     "summary": {
-      "text": "Public apps requesting sensitive or restricted scopes must undergo Google's OAuth verification process.",
+      "text": "Public apps that use scopes permitting access to certain user data must complete Google's verification process.",
       "status": "verified",
       "sourceIds": [
         "S4"
@@ -34,12 +34,20 @@
     },
     "triggers": [
       {
-        "text": "Apps requesting sensitive or restricted scopes.",
-        "status": "inferred",
+        "text": "Requesting sensitive scopes, which give access to specific Google user data and need additional OAuth app verification.",
+        "status": "verified",
         "sourceIds": [
           "S4"
         ],
-        "quote": null
+        "quote": "These scopes provide access to specific Google user data that users authorize for your app. They require additional"
+      },
+      {
+        "text": "Requesting restricted scopes (for example gmail.readonly), which need scope verification before they can be requested from any Google Account. Storing or transmitting restricted scope data on servers also needs a security assessment.",
+        "status": "verified",
+        "sourceIds": [
+          "S5"
+        ],
+        "quote": "These scopes provide wide access to Google user data and require you to go through a scope verification process before you request the scopes from any Google Account. … If you store or transmit restricted scope data on servers, then you need to complete a"
       }
     ],
     "publishedTimeline": {
@@ -55,15 +63,15 @@
     {
       "kind": "account",
       "text": "A Google account with access to the Google Cloud Console.",
-      "status": "verified",
+      "status": "inferred",
       "sourceIds": [
         "S6"
       ],
-      "quote": "To run any of the code samples in this document, you'll need a Google Account"
+      "quote": null
     },
     {
       "kind": "permission",
-      "text": "A Google Cloud project with the Gmail API enabled.",
+      "text": "The Gmail API must be enabled for the project; any application that calls Google APIs needs to enable them in the API Console.",
       "status": "verified",
       "sourceIds": [
         "S6"
@@ -88,7 +96,7 @@
   ],
   "scopes": {
     "model": {
-      "text": "Scopes define the level of access requested; use the most narrow scope possible.",
+      "text": "Choose the most narrowly focused scope possible and avoid requesting scopes the app doesn't need.",
       "status": "verified",
       "sourceIds": [
         "S4"
@@ -133,7 +141,7 @@
       "link": "https://console.developers.google.com/apis/library",
       "actor": "human_only",
       "actorReason": "Requires administrative access to create cloud resources.",
-      "text": "Create a new project to host your OAuth credentials and enable APIs.",
+      "text": "Select an existing Google Cloud project or create a new one.",
       "status": "verified",
       "sourceIds": [
         "S6"
@@ -163,7 +171,7 @@
       "link": "https://console.developers.google.com/auth/branding",
       "actor": "human_only",
       "actorReason": "Requires business/legal information and identity validation.",
-      "text": "Configure the branding and required URLs before creating credentials.",
+      "text": "On the Branding page, provide the app's name, logo, developer contact information and relevant links.",
       "status": "verified",
       "sourceIds": [
         "S5"
@@ -178,12 +186,12 @@
       "link": "https://console.developers.google.com/auth/clients",
       "actor": "agent_assists",
       "actorReason": "Requires entering the specific redirect URI provided by the application environment.",
-      "text": "Register a new client ID for web application access.",
+      "text": "Click Create client, choose the application type, and enter the required information.",
       "status": "verified",
       "sourceIds": [
         "S7"
       ],
-      "quote": "Click CREATE CLIENT",
+      "quote": "Click CREATE CLIENT 3. Select the appropriate application type for your application and enter any additional information required.",
       "linkSeenInSources": true
     },
     {
@@ -193,12 +201,12 @@
       "link": "https://dashboard.composio.dev/",
       "actor": "agent_assists",
       "actorReason": "User must securely handle secret values provided by the Cloud Console.",
-      "text": "Copy the credentials generated in the Google Console into the Composio auth config setup.",
-      "status": "inferred",
+      "text": "Create the auth config in the Composio dashboard and enter the required credential fields.",
+      "status": "verified",
       "sourceIds": [
         "S3"
       ],
-      "quote": null,
+      "quote": "1. Click Create Auth Config 2. Select the toolkit 3. Choose the auth scheme (OAuth2, API Key, Bearer Token, etc.) 4. Follow the dashboard instructions for the required credential fields",
       "linkSeenInSources": true
     }
   ],
@@ -222,7 +230,7 @@
   "risks": [
     {
       "kind": "review",
-      "text": "Sensitive or restricted scopes require Google verification, which can take weeks.",
+      "text": "Restricted-scope verification can take several weeks.",
       "status": "verified",
       "sourceIds": [
         "S5"
@@ -231,12 +239,30 @@
     },
     {
       "kind": "security",
-      "text": "Never hardcode client secrets in source control.",
+      "text": "Don't store the downloaded client_secret.json file in a publicly accessible location.",
       "status": "verified",
       "sourceIds": [
         "S6"
       ],
       "quote": "Don't store the client_secret.json file in a publicly-accessible location."
+    },
+    {
+      "kind": "security",
+      "text": "The client secret is shown only after you create the client; store it in a secure place.",
+      "status": "verified",
+      "sourceIds": [
+        "S7"
+      ],
+      "quote": "Your application's client secret will only be shown after you create the client. Store this information in a secure place"
+    },
+    {
+      "kind": "limit",
+      "text": "Apps in development, testing or staging are not subject to verification, but they show the unverified-app screen and are capped at 100 users until verified.",
+      "status": "verified",
+      "sourceIds": [
+        "S8"
+      ],
+      "quote": "Apps in development/testing/staging mode are not subject to verification. … Your app will be subject to the unverified app screen and the 100-user cap will be in effect when an app is in development/testing/staging."
     }
   ],
   "unresolved": [
@@ -530,11 +556,91 @@
         "path": "externalReview.publishedTimeline",
         "change": "removed unsupported duration",
         "reason": "\"2-3 days\" is not in the quoted text, so only the quote is kept (rule applied to the saved guide after the run)"
+      },
+      {
+        "path": "authMethod",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old quote was a generic description of OAuth 2.0 that said nothing about client IDs, secrets or the authorization code flow."
+      },
+      {
+        "path": "externalReview.summary",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old text named sensitive and restricted scopes; the quote says 'certain user data'. The scope tiers are covered by the triggers."
+      },
+      {
+        "path": "scopes.model",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old text also defined scopes, which the quote does not do."
+      },
+      {
+        "path": "externalReview.requirement",
+        "change": "manual audit 2026-11-11: always → conditional",
+        "reason": "Google's pages say verification applies to public apps using certain scopes, and that apps in development, testing or staging are not subject to it. 'Always' was not supported."
+      },
+      {
+        "path": "externalReview.triggers[0]",
+        "change": "manual audit 2026-11-11: inferred → verified",
+        "reason": "The cited Gmail scopes page states this; upgraded with the quote."
+      },
+      {
+        "path": "externalReview.triggers[1]",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Restricted scopes are the main trigger for Gmail and were missing as a separate trigger."
+      },
+      {
+        "path": "prerequisites[0]",
+        "change": "manual audit 2026-11-11: verified → inferred",
+        "reason": "The quote ('To run any of the code samples in this document, you'll need a Google Account') is about running Google's code samples, not about creating the OAuth app."
+      },
+      {
+        "path": "prerequisites[1]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "Reworded so the project requirement is not stated as a separate fact."
+      },
+      {
+        "path": "steps[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old text added 'to host your OAuth credentials and enable APIs', which the quote does not say."
+      },
+      {
+        "path": "steps[2]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old text added 'before creating credentials', which the quote does not say."
+      },
+      {
+        "path": "steps[3]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old quote was the two-word fragment 'Click CREATE CLIENT'."
+      },
+      {
+        "path": "steps[4]",
+        "change": "manual audit 2026-11-11: inferred → verified",
+        "reason": "Composio's page states the steps; upgraded with the quote."
+      },
+      {
+        "path": "risks[0]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old claim said sensitive scopes take weeks too; the quote is about restricted scopes only."
+      },
+      {
+        "path": "risks[1]",
+        "change": "manual audit 2026-11-11: verified, rewritten",
+        "reason": "The old claim ('never hardcode client secrets in source control') said more than the quote."
+      },
+      {
+        "path": "risks[2]",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Stated on the retrieved page."
+      },
+      {
+        "path": "risks[3]",
+        "change": "manual audit 2026-11-11: added",
+        "reason": "Stated on the retrieved page and needed to explain why review is conditional."
       }
     ],
     "counts": {
-      "verified": 13,
-      "inferred": 2,
+      "verified": 17,
+      "inferred": 1,
       "unknown": 0
     },
     "thirdPartyOnly": [],

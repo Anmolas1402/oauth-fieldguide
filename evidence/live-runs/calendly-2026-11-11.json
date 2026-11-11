@@ -1,0 +1,858 @@
+{
+  "summary": {
+    "query": "Calendly",
+    "startedAt": "2026-11-11T13:00:21.003Z",
+    "durationMs": 188573,
+    "outcome": "guide",
+    "error": null,
+    "model": "gemini/gemini-3.5-flash-lite",
+    "modelCalls": [
+      "[investigate] Calendly: 6 model calls on gemini/gemini-3.5-flash-lite"
+    ],
+    "composio": {
+      "slug": "CALENDLY",
+      "managedOAuth": true,
+      "catalogueList": "managed"
+    },
+    "searches": [
+      {
+        "query": "calendly oauth developer registration app client id redirect uri",
+        "results": 8
+      }
+    ],
+    "pagesRetrieved": [
+      {
+        "id": "S4",
+        "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+        "authority": "official"
+      },
+      {
+        "id": "S5",
+        "url": "https://developer.calendly.com/api-docs/calendly-o-auth/o-auth/get-oauth-authorize",
+        "authority": "official"
+      },
+      {
+        "id": "S6",
+        "url": "https://developer.calendly.com/llms.txt",
+        "authority": "official"
+      },
+      {
+        "id": "S7",
+        "url": "https://developer.calendly.com/docs/authentication/refresh-token-rotation-guide.md",
+        "authority": "official"
+      },
+      {
+        "id": "S8",
+        "url": "https://developer.calendly.com/api-docs/overview/rate-limits.md",
+        "authority": "official"
+      },
+      {
+        "id": "S9",
+        "url": "https://developer.calendly.com/docs/authentication/scopes.md",
+        "authority": "official"
+      }
+    ],
+    "fetchFailures": [],
+    "officialPagesRead": 6,
+    "counts": {
+      "verified": 13,
+      "inferred": 3,
+      "unknown": 0
+    },
+    "steps": [
+      "Log in and Open Developer Tools [verified, human_only]",
+      "Create OAuth App [verified, human_only]",
+      "Select Scopes and Save Credentials [verified, human_only]",
+      "Create Custom Auth Config in Composio [verified, human_only]",
+      "Update Redirect URI in Calendly [inferred, human_only]"
+    ],
+    "review": {
+      "requirement": "unknown",
+      "timeline": "inferred"
+    },
+    "validatorAdjustments": 2,
+    "thirdPartyOnly": [],
+    "incompleteGaps": [
+      "Whether Calendly reviews or approves the app before launch could not be established."
+    ],
+    "unresolved": [
+      "Whether custom OAuth apps require formal review or verification before public distribution outside the developer organization",
+      "Exact structure of Composio redirect URIs for custom Calendly auth configs"
+    ]
+  },
+  "events": [
+    {
+      "type": "stage",
+      "id": "resolve",
+      "state": "running"
+    },
+    {
+      "type": "activity",
+      "stage": "resolve",
+      "activity": {
+        "id": "catalogue",
+        "kind": "composio",
+        "label": "Composio managed-auth catalogue",
+        "url": "https://docs.composio.dev/toolkits/managed-auth",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "resolve",
+      "activity": {
+        "id": "catalogue",
+        "kind": "composio",
+        "label": "Composio managed-auth catalogue",
+        "url": "https://docs.composio.dev/toolkits/managed-auth",
+        "state": "done",
+        "detail": "401 OAuth toolkits listed"
+      }
+    },
+    {
+      "type": "stage",
+      "id": "resolve",
+      "state": "done",
+      "detail": "Matched Composio toolkit Calendly (CALENDLY)"
+    },
+    {
+      "type": "stage",
+      "id": "composio",
+      "state": "running"
+    },
+    {
+      "type": "activity",
+      "stage": "composio",
+      "activity": {
+        "id": "toolkit",
+        "kind": "composio",
+        "label": "Composio toolkit page: Calendly",
+        "url": "https://docs.composio.dev/toolkits/calendly",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "composio",
+      "activity": {
+        "id": "toolkit",
+        "kind": "composio",
+        "label": "Composio toolkit page: Calendly",
+        "url": "https://docs.composio.dev/toolkits/calendly",
+        "state": "done",
+        "detail": "auth: OAUTH2"
+      }
+    },
+    {
+      "type": "composio",
+      "facts": {
+        "listed": true,
+        "name": "Calendly",
+        "slug": "CALENDLY",
+        "category": "scheduling & booking",
+        "authSchemes": [
+          "OAUTH2"
+        ],
+        "managedOAuth": true,
+        "catalogueList": "managed",
+        "customGuideUrl": null,
+        "faq": [
+          {
+            "question": "Why can't I configure individual scopes for Calendly?",
+            "answer": "Calendly does not let end users selectively approve individual scopes during the OAuth connection flow. The scopes configured in your Calendly OAuth app are the scopes that will be requested during authorization, and the resulting access token will include that configured permission set.\n\nTo change Calendly permissions, update the scopes in your OAuth app/auth config and reconnect the account so a new token is issued with the updated scopes."
+          }
+        ],
+        "matchNote": null,
+        "alternatives": [
+          {
+            "name": "Calendly MCP",
+            "slug": "CALENDLY_MCP"
+          }
+        ]
+      }
+    },
+    {
+      "type": "stage",
+      "id": "composio",
+      "state": "done",
+      "detail": "Composio-managed OAuth app is available; bringing your own is optional"
+    },
+    {
+      "type": "stage",
+      "id": "research",
+      "state": "running"
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_15026553097922985194",
+        "kind": "search",
+        "label": "calendly oauth developer registration app client id redirect uri",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_15026553097922985194",
+        "kind": "search",
+        "label": "calendly oauth developer registration app client id redirect uri",
+        "state": "done",
+        "detail": "8 results via DuckDuckGo"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_937521204417383445",
+        "kind": "fetch",
+        "label": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+        "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_937521204417380540",
+        "kind": "fetch",
+        "label": "https://developer.calendly.com/api-docs/calendly-o-auth/o-auth/get-oauth-authorize",
+        "url": "https://developer.calendly.com/api-docs/calendly-o-auth/o-auth/get-oauth-authorize",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_937521204417383445",
+        "kind": "fetch",
+        "label": "Creating an OAuth app | Calendly | Developer Documentation",
+        "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+        "state": "done",
+        "detail": "S4 · 4,537 chars"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_937521204417380540",
+        "kind": "fetch",
+        "label": "Get Authorization Code | Calendly | Developer Documentation",
+        "url": "https://developer.calendly.com/api-docs/calendly-o-auth/o-auth/get-oauth-authorize",
+        "state": "done",
+        "detail": "S5 · 1,850 chars"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_5453222154898479884",
+        "kind": "fetch",
+        "label": "https://developer.calendly.com/llms.txt",
+        "url": "https://developer.calendly.com/llms.txt",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_5453222154898479884",
+        "kind": "fetch",
+        "label": "Calendly | Developer Documentation",
+        "url": "https://developer.calendly.com/llms.txt",
+        "state": "done",
+        "detail": "S6 · 16,996 chars"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12251085739317589770",
+        "kind": "fetch",
+        "label": "https://developer.calendly.com/docs/authentication/scopes.md",
+        "url": "https://developer.calendly.com/docs/authentication/scopes.md",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12251085739317588737",
+        "kind": "fetch",
+        "label": "https://developer.calendly.com/docs/authentication/refresh-token-rotation-guide.md",
+        "url": "https://developer.calendly.com/docs/authentication/refresh-token-rotation-guide.md",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12251085739317591800",
+        "kind": "fetch",
+        "label": "https://developer.calendly.com/api-docs/overview/rate-limits.md",
+        "url": "https://developer.calendly.com/api-docs/overview/rate-limits.md",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12251085739317588737",
+        "kind": "fetch",
+        "label": "How to handle single-use refresh tokens",
+        "url": "https://developer.calendly.com/docs/authentication/refresh-token-rotation-guide.md",
+        "state": "done",
+        "detail": "S7 · 8,020 chars"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12251085739317591800",
+        "kind": "fetch",
+        "label": "Rate Limits",
+        "url": "https://developer.calendly.com/api-docs/overview/rate-limits.md",
+        "state": "done",
+        "detail": "S8 · 2,992 chars"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12251085739317589770",
+        "kind": "fetch",
+        "label": "Authorization Scopes",
+        "url": "https://developer.calendly.com/docs/authentication/scopes.md",
+        "state": "done",
+        "detail": "S9 · 13,847 chars"
+      }
+    },
+    {
+      "type": "stage",
+      "id": "research",
+      "state": "done",
+      "detail": "1 searches, 6 pages read; used gemini-3.5-flash-lite because gemini-3.8-flash (HTTP 504), gemini-3.6-flash (HTTP 429), gemini-3.5-flash (HTTP 429) was unavailable"
+    },
+    {
+      "type": "stage",
+      "id": "compose",
+      "state": "running"
+    },
+    {
+      "type": "stage",
+      "id": "compose",
+      "state": "done",
+      "detail": "5 setup steps drafted"
+    },
+    {
+      "type": "stage",
+      "id": "verify",
+      "state": "running"
+    },
+    {
+      "type": "stage",
+      "id": "verify",
+      "state": "done",
+      "detail": "13 verified, 3 inferred, 0 unknown; 2 adjustments; incomplete investigation (1 gap)"
+    }
+  ],
+  "guide": {
+    "providerStatus": "identified",
+    "provider": {
+      "name": "Calendly",
+      "description": "An appointment scheduling tool that automates meeting invitations, availability checks, and reminders.",
+      "assumption": null
+    },
+    "oauthAppKind": "OAuth App",
+    "authMethod": {
+      "text": "OAuth 2.0 authorization code flow with PKCE (S256 method required)",
+      "status": "verified",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": "Every OAuth app must use Proof Key for Code Exchange (PKCE) with the S256 method."
+    },
+    "difficulty": {
+      "level": "low",
+      "rationale": "Registering an OAuth app in the Calendly developer console is straightforward, though developers must implement server-side PKCE and single-use refresh token rotation."
+    },
+    "handsOnEffort": {
+      "estimate": "15-30 minutes",
+      "basis": "Assumes an active Calendly account, access to developer tools, and basic server-side OAuth implementation."
+    },
+    "externalReview": {
+      "requirement": "unknown",
+      "summary": {
+        "text": "Calendly documentation does not specify a formal review or publication requirement for custom developer-owned OAuth apps.",
+        "status": "inferred",
+        "sourceIds": [],
+        "quote": null
+      },
+      "triggers": [],
+      "publishedTimeline": {
+        "text": "Calendly publishes no review timeline in the retrieved documentation.",
+        "status": "inferred",
+        "sourceIds": [],
+        "quote": null
+      }
+    },
+    "prerequisites": [
+      {
+        "kind": "account",
+        "text": "A Calendly account is required to access developer tools and register an OAuth app.",
+        "status": "verified",
+        "sourceIds": [
+          "S4"
+        ],
+        "quote": "1. Log in to Calendly, or sign up for a Calendly account."
+      }
+    ],
+    "console": {
+      "name": "Calendly Developer tools",
+      "url": "https://calendly.com/app/developer",
+      "urlSeenInSources": true
+    },
+    "redirectRules": [
+      {
+        "text": "Enter exactly one redirect URI per OAuth app.",
+        "status": "verified",
+        "sourceIds": [
+          "S4"
+        ],
+        "quote": "Enter exactly one URI."
+      },
+      {
+        "text": "Sandbox environment permits https URIs and http URIs on localhost.",
+        "status": "verified",
+        "sourceIds": [
+          "S4"
+        ],
+        "quote": "https URIs, and http URIs on localhost."
+      },
+      {
+        "text": "Production environment requires https URIs only.",
+        "status": "verified",
+        "sourceIds": [
+          "S4"
+        ],
+        "quote": "Production    https URIs only"
+      }
+    ],
+    "scopes": {
+      "model": {
+        "text": "Authorization scopes define permissions requested when accessing Calendly APIs, where write scopes implicitly include their corresponding read scopes.",
+        "status": "verified",
+        "sourceIds": [
+          "S9"
+        ],
+        "quote": "A :write scope implicitly includes the corresponding :read scope within the same domain."
+      },
+      "examples": [
+        {
+          "scope": "scheduled_events:read",
+          "grants": "Retrieve scheduled events and event invitee information.",
+          "tier": null,
+          "sourceIds": [
+            "S9"
+          ],
+          "seenInSource": true
+        },
+        {
+          "scope": "webhooks:write",
+          "grants": "Create or delete webhook subscriptions.",
+          "tier": null,
+          "sourceIds": [
+            "S9"
+          ],
+          "seenInSource": true
+        },
+        {
+          "scope": "availability:read",
+          "grants": "Retrieve user and event-type availability.",
+          "tier": null,
+          "sourceIds": [
+            "S9"
+          ],
+          "seenInSource": true
+        },
+        {
+          "scope": "event_types:read",
+          "grants": "Retrieve event type details and available times.",
+          "tier": null,
+          "sourceIds": [
+            "S9"
+          ],
+          "seenInSource": true
+        }
+      ]
+    },
+    "steps": [
+      {
+        "title": "Log in and Open Developer Tools",
+        "action": "Log into Calendly and navigate to the Developer tools page.",
+        "where": "Calendly Profile menu",
+        "link": "https://calendly.com/app/developer",
+        "actor": "human_only",
+        "actorReason": "Requires logging into the developer's human Calendly account.",
+        "text": "Log in to Calendly, open the Profile menu and select Developer.",
+        "status": "verified",
+        "sourceIds": [
+          "S4"
+        ],
+        "quote": "1. Log in to Calendly, or sign up for a Calendly account.",
+        "linkSeenInSources": true
+      },
+      {
+        "title": "Create OAuth App",
+        "action": "Select Create OAuth app and fill in app name, redirect URI, and environment type.",
+        "where": "Calendly Developer tools",
+        "link": "https://calendly.com/app/developer",
+        "actor": "human_only",
+        "actorReason": "Filling out app registration fields requires human action inside the provider console.",
+        "text": "On the OAuth apps tab, select Create OAuth app and enter app details.",
+        "status": "verified",
+        "sourceIds": [
+          "S4"
+        ],
+        "quote": "On the OAuth apps tab, select Create OAuth app.",
+        "linkSeenInSources": true
+      },
+      {
+        "title": "Select Scopes and Save Credentials",
+        "action": "Select required scopes and save the Client ID, Client secret, and Webhook signing key securely.",
+        "where": "Calendly Developer tools",
+        "link": "https://calendly.com/app/developer",
+        "actor": "human_only",
+        "actorReason": "Viewing and storing sensitive client secrets requires human handling.",
+        "text": "Copy all three values and store them securely before you leave this screen.",
+        "status": "verified",
+        "sourceIds": [
+          "S4"
+        ],
+        "quote": "Copy all three values and store them securely before you leave this screen.",
+        "linkSeenInSources": true
+      },
+      {
+        "title": "Create Custom Auth Config in Composio",
+        "action": "Create a custom auth config for Calendly and copy the provided redirect URI.",
+        "where": "Composio dashboard",
+        "link": "https://dashboard.composio.dev/~/project/auth-configs",
+        "actor": "human_only",
+        "actorReason": "Entering credentials into the Composio dashboard requires a logged-in user.",
+        "text": "Click Create Auth Config, select the toolkit, and follow dashboard instructions.",
+        "status": "verified",
+        "sourceIds": [
+          "S3"
+        ],
+        "quote": "1. Click **Create Auth Config**",
+        "linkSeenInSources": true
+      },
+      {
+        "title": "Update Redirect URI in Calendly",
+        "action": "Update your Calendly OAuth app settings with the redirect URI provided by Composio.",
+        "where": "Calendly Developer tools",
+        "link": "https://calendly.com/app/developer",
+        "actor": "human_only",
+        "actorReason": "Modifying application settings in the provider console requires human action.",
+        "text": "Edit your OAuth app in Calendly to set the redirect URI to match the Composio configuration.",
+        "status": "inferred",
+        "sourceIds": [
+          "S3",
+          "S4"
+        ],
+        "quote": null,
+        "linkSeenInSources": true
+      }
+    ],
+    "division": {
+      "agentPrepares": [
+        "Draft the required scopes list based on integration features"
+      ],
+      "agentAssists": [
+        "Provide code snippets for server-side PKCE and refresh token rotation logic"
+      ],
+      "humanOnly": [
+        "Create Calendly account and register the OAuth app",
+        "Securely store client ID and client secret",
+        "Configure redirect URIs and connect test accounts"
+      ]
+    },
+    "risks": [
+      {
+        "kind": "limit",
+        "text": "Paid plans have a rate limit of 500 requests per user per minute, while Free plans are limited to 50 requests per user per minute.",
+        "status": "verified",
+        "sourceIds": [
+          "S8"
+        ],
+        "quote": "500 requests per user per minute"
+      },
+      {
+        "kind": "security",
+        "text": "Calendly enforces single-use refresh tokens with rotation; refreshing immediately revokes the previous refresh token.",
+        "status": "verified",
+        "sourceIds": [
+          "S7"
+        ],
+        "quote": "A refresh token is revoked immediately after a successful POST /oauth/token call."
+      },
+      {
+        "kind": "limit",
+        "text": "Only 8 OAuth tokens per user can be requested within a span of 1 minute.",
+        "status": "verified",
+        "sourceIds": [
+          "S8"
+        ],
+        "quote": "Only 8 OAuth tokens per user can be requested within a span of 1 minute."
+      }
+    ],
+    "unresolved": [
+      "Whether custom OAuth apps require formal review or verification before public distribution outside the developer organization",
+      "Exact structure of Composio redirect URIs for custom Calendly auth configs"
+    ],
+    "nextActions": [
+      "Sign up for a Calendly account and open Developer tools",
+      "Register a new OAuth app and record the client ID and secret",
+      "Implement server-side PKCE and single-use refresh token rotation",
+      "Set up a custom auth config in the Composio dashboard"
+    ],
+    "meta": {
+      "query": "Calendly",
+      "investigatedAt": "2026-11-11T13:03:29.569Z",
+      "model": "gemini/gemini-3.5-flash-lite",
+      "durationMs": 188566,
+      "origin": "live"
+    },
+    "composio": {
+      "listed": true,
+      "name": "Calendly",
+      "slug": "CALENDLY",
+      "category": "scheduling & booking",
+      "authSchemes": [
+        "OAUTH2"
+      ],
+      "managedOAuth": true,
+      "catalogueList": "managed",
+      "customGuideUrl": null,
+      "faq": [
+        {
+          "question": "Why can't I configure individual scopes for Calendly?",
+          "answer": "Calendly does not let end users selectively approve individual scopes during the OAuth connection flow. The scopes configured in your Calendly OAuth app are the scopes that will be requested during authorization, and the resulting access token will include that configured permission set.\n\nTo change Calendly permissions, update the scopes in your OAuth app/auth config and reconnect the account so a new token is issued with the updated scopes."
+        }
+      ],
+      "matchNote": null,
+      "alternatives": [
+        {
+          "name": "Calendly MCP",
+          "slug": "CALENDLY_MCP"
+        }
+      ]
+    },
+    "sources": [
+      {
+        "id": "S1",
+        "url": "https://docs.composio.dev/toolkits/calendly",
+        "title": "Calendly toolkit (Composio docs)",
+        "kind": "composio",
+        "authority": "composio",
+        "retrievedAt": "2026-11-11T13:00:21.968Z",
+        "chars": 906,
+        "truncated": false
+      },
+      {
+        "id": "S2",
+        "url": "https://docs.composio.dev/toolkits/managed-auth",
+        "title": "Managed OAuth apps catalogue (Composio docs)",
+        "kind": "composio",
+        "authority": "composio",
+        "retrievedAt": "2026-11-11T13:00:21.500Z",
+        "chars": 1681,
+        "truncated": true
+      },
+      {
+        "id": "S3",
+        "url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app",
+        "title": "Managed vs custom auth (Composio docs)",
+        "kind": "composio",
+        "authority": "composio",
+        "retrievedAt": "2026-11-11T13:00:22.563Z",
+        "chars": 4571,
+        "truncated": false
+      },
+      {
+        "id": "S4",
+        "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+        "title": "Creating an OAuth app | Calendly | Developer Documentation",
+        "kind": "provider_page",
+        "authority": "official",
+        "retrievedAt": "2026-11-11T13:02:45.656Z",
+        "chars": 4537,
+        "truncated": false
+      },
+      {
+        "id": "S5",
+        "url": "https://developer.calendly.com/api-docs/calendly-o-auth/o-auth/get-oauth-authorize",
+        "title": "Get Authorization Code | Calendly | Developer Documentation",
+        "kind": "provider_page",
+        "authority": "official",
+        "retrievedAt": "2026-11-11T13:02:46.204Z",
+        "chars": 1850,
+        "truncated": false
+      },
+      {
+        "id": "S6",
+        "url": "https://developer.calendly.com/llms.txt",
+        "title": "Calendly | Developer Documentation",
+        "kind": "provider_page",
+        "authority": "official",
+        "retrievedAt": "2026-11-11T13:03:03.786Z",
+        "chars": 16996,
+        "truncated": false
+      },
+      {
+        "id": "S7",
+        "url": "https://developer.calendly.com/docs/authentication/refresh-token-rotation-guide.md",
+        "title": "How to handle single-use refresh tokens",
+        "kind": "provider_page",
+        "authority": "official",
+        "retrievedAt": "2026-11-11T13:03:06.868Z",
+        "chars": 8020,
+        "truncated": false
+      },
+      {
+        "id": "S8",
+        "url": "https://developer.calendly.com/api-docs/overview/rate-limits.md",
+        "title": "Rate Limits",
+        "kind": "provider_page",
+        "authority": "official",
+        "retrievedAt": "2026-11-11T13:03:06.952Z",
+        "chars": 2992,
+        "truncated": false
+      },
+      {
+        "id": "S9",
+        "url": "https://developer.calendly.com/docs/authentication/scopes.md",
+        "title": "Authorization Scopes",
+        "kind": "provider_page",
+        "authority": "official",
+        "retrievedAt": "2026-11-11T13:03:06.958Z",
+        "chars": 13847,
+        "truncated": false
+      }
+    ],
+    "log": {
+      "searches": [
+        {
+          "query": "calendly oauth developer registration app client id redirect uri",
+          "results": [
+            {
+              "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+              "title": "Creating an OAuth app | Calendly | Developer Documentation"
+            },
+            {
+              "url": "https://developer.calendly.com/api-docs/calendly-o-auth/o-auth/get-oauth-authorize",
+              "title": "Get Authorization Code | Calendly | Developer Documentation"
+            },
+            {
+              "url": "https://community.calendly.com/how-do-i-40/how-to-implement-add-integration-my-app-oauth-sign-in-redirect-back-to-calendly-flow-for-partner-marketplace-4819",
+              "title": "How to implement \"Add Integration → MY APP OAuth sign-in → Redirect ..."
+            },
+            {
+              "url": "https://oauth-launchpad.cf-hub.workers.dev/g/calendly-mw0ubcou",
+              "title": "Calendly OAuth guide · OAuth Launchpad"
+            },
+            {
+              "url": "https://www.klavis.ai/docs/knowledge-base/oauth_app/calendly",
+              "title": "Setting Up Calendly OAuth App - klavis.ai"
+            },
+            {
+              "url": "https://calendly.com/help/calendly-api-overview",
+              "title": "Calendly API overview"
+            },
+            {
+              "url": "https://docs.arcade.dev/en/references/auth-providers/calendly",
+              "title": "Calendly | Arcade Docs"
+            },
+            {
+              "url": "https://community.calendly.com/api-webhook-help-61/calendly-oauth-2-0-connection-need-client-id-secret-etc-713",
+              "title": "Calendly Oauth 2.0 connection -> Need client id, secret etc"
+            }
+          ]
+        }
+      ],
+      "fetches": [
+        {
+          "url": "https://developer.calendly.com/docs/authentication/creating-an-oauth-app",
+          "ok": true,
+          "sourceId": "S4",
+          "detail": "4,537 characters read"
+        },
+        {
+          "url": "https://developer.calendly.com/api-docs/calendly-o-auth/o-auth/get-oauth-authorize",
+          "ok": true,
+          "sourceId": "S5",
+          "detail": "1,850 characters read"
+        },
+        {
+          "url": "https://developer.calendly.com/llms.txt",
+          "ok": true,
+          "sourceId": "S6",
+          "detail": "16,996 characters read"
+        },
+        {
+          "url": "https://developer.calendly.com/docs/authentication/refresh-token-rotation-guide.md",
+          "ok": true,
+          "sourceId": "S7",
+          "detail": "8,020 characters read"
+        },
+        {
+          "url": "https://developer.calendly.com/api-docs/overview/rate-limits.md",
+          "ok": true,
+          "sourceId": "S8",
+          "detail": "2,992 characters read"
+        },
+        {
+          "url": "https://developer.calendly.com/docs/authentication/scopes.md",
+          "ok": true,
+          "sourceId": "S9",
+          "detail": "13,847 characters read"
+        }
+      ]
+    },
+    "validation": {
+      "adjustments": [
+        {
+          "path": "externalReview.summary",
+          "change": "verified → inferred",
+          "reason": "no retrieved page was cited"
+        },
+        {
+          "path": "externalReview.publishedTimeline",
+          "change": "verified → inferred",
+          "reason": "no retrieved page was cited"
+        }
+      ],
+      "counts": {
+        "verified": 13,
+        "inferred": 3,
+        "unknown": 0
+      },
+      "thirdPartyOnly": [],
+      "officialPagesRead": 6
+    }
+  }
+}

@@ -1,4 +1,4 @@
-import { ACTOR_LABEL, DIFFICULTY_LABEL, REVIEW_LABEL, STATUS_LABEL, formatDate, ownership } from "./derive.ts";
+import { ACTOR_LABEL, DIFFICULTY_LABEL, REVIEW_LABEL, STATUS_LABEL, formatDate, investigationGaps, ownership } from "./derive.ts";
 import type { Claim, Guide } from "./schema.ts";
 
 const refs = (c: { sourceIds: string[] }) => (c.sourceIds.length ? ` [${c.sourceIds.join(", ")}]` : "");
@@ -19,11 +19,12 @@ export function guideToMarkdown(g: Guide, done: ReadonlySet<number> = new Set())
   const p = (...l: string[]) => out.push(...l);
 
   p(`# ${g.provider.name}: OAuth app setup guide`, "");
-  if (g.validation.officialPagesRead === 0)
-    p(`> **Caution:** no official ${g.provider.name} documentation could be read in this investigation. Claims rest on Composio and third-party pages.`, "");
+  const gaps = investigationGaps(g);
+  if (gaps.length)
+    p("> **Incomplete investigation.** Treat this as a starting point, not a launch plan:", ...gaps.map((x) => `> - ${x}`), "");
   p(
     `Investigated ${formatDate(g.meta.investigatedAt)} by OAuth Fieldguide (${g.meta.model}). ` +
-      `Evidence labels: **Verified** = quoted from a retrieved page; **Inferred** = not stated outright in a retrieved page; **Unknown** = could not be established.`,
+      `Evidence labels: **Verified** = backed by a quote found on a retrieved page (the check confirms the quote is on the page, not that it proves every part of the claim); **Inferred** = not stated outright in a retrieved page; **Unknown** = could not be established.`,
     "",
   );
   if (g.provider.assumption) p(`> Assumption: ${g.provider.assumption}`, "");

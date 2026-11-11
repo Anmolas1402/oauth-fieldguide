@@ -9,6 +9,9 @@ import { makeDraft } from "./fixtures.ts";
 const LONG = "Register your app in the Acme Developer Portal. Redirect URIs must use HTTPS and must match exactly. ".repeat(6);
 const composio: ComposioFacts = { listed: true, name: "Acme", slug: "ACME", category: null, authSchemes: ["OAUTH2"], managedOAuth: false, catalogueList: "byo", customGuideUrl: null, faq: [], matchNote: null, alternatives: [] };
 
+/** Fake DNS: every test host resolves to a public documentation address. */
+const publicDns = async () => [{ address: "93.184.216.34", family: 4 }];
+
 /** Fake network: two docs pages, one redirect to an already-read page, one 404, and a search engine. */
 const fakeFetch = (async (input: string | URL) => {
   const url = String(input);
@@ -65,7 +68,7 @@ describe("research loop", () => {
     ]);
     const activities: Activity[] = [];
     const seed = [{ id: "S1", url: "https://docs.composio.dev/toolkits/acme", title: "Acme toolkit", kind: "composio" as const, retrievedAt: "", chars: 10, truncated: false, text: "x" }];
-    const r = await runResearch({ llm, providerName: "Acme", query: "acme", composio, seedSources: seed, emit: (a) => activities.push(a), fetchImpl: fakeFetch });
+    const r = await runResearch({ llm, providerName: "Acme", query: "acme", composio, seedSources: seed, emit: (a) => activities.push(a), fetchImpl: fakeFetch, resolveHost: publicDns });
 
     expect(r.ledger.map((s) => `${s.id} ${s.url}`)).toEqual([
       "S1 https://docs.composio.dev/toolkits/acme",
@@ -91,7 +94,7 @@ describe("research loop", () => {
   it("asks for a second pass when too few provider pages were read, and says so", async () => {
     const llm = scriptedLLM([[{ name: "fetch_page", args: { url: "https://developers.acme.dev/oauth" } }]]);
     const activities: Activity[] = [];
-    const r = await runResearch({ llm, providerName: "Acme", query: "acme", composio, seedSources: [], emit: (a) => activities.push(a), fetchImpl: fakeFetch });
+    const r = await runResearch({ llm, providerName: "Acme", query: "acme", composio, seedSources: [], emit: (a) => activities.push(a), fetchImpl: fakeFetch, resolveHost: publicDns });
     expect(llm.loops).toHaveLength(2);
     expect(llm.loops[1]).toContain("S1 https://developers.acme.dev/oauth");
     expect(activities.some((a) => a.kind === "note" && /Only 1 provider pages/.test(a.label))).toBe(true);
@@ -100,7 +103,7 @@ describe("research loop", () => {
 
   it("does not ask for a second pass for a provider it could not identify", async () => {
     const llm = scriptedLLM([], "PROVIDER: Zzqqx | STATUS: not_identified");
-    const r = await runResearch({ llm, providerName: "Zzqqx", query: "zzqqx", composio, seedSources: [], emit: () => {}, fetchImpl: fakeFetch });
+    const r = await runResearch({ llm, providerName: "Zzqqx", query: "zzqqx", composio, seedSources: [], emit: () => {}, fetchImpl: fakeFetch, resolveHost: publicDns });
     expect(r.notes).toMatch(/not_identified/);
     expect(llm.loops).toHaveLength(1);
   });
@@ -108,20 +111,20 @@ describe("research loop", () => {
   it("enforces the page budget", async () => {
     const calls = Array.from({ length: BUDGET.fetches + 3 }, (_, i) => ({ name: "fetch_page", args: { url: `https://developers.acme.dev/p${i}` } }));
     const llm = scriptedLLM([calls]);
-    const r = await runResearch({ llm, providerName: "Acme", query: "acme", composio, seedSources: [], emit: () => {}, fetchImpl: fakeFetch });
+    const r = await runResearch({ llm, providerName: "Acme", query: "acme", composio, seedSources: [], emit: () => {}, fetchImpl: fakeFetch, resolveHost: publicDns });
     expect(r.log.fetches.filter((f) => f.detail.includes("budget")).length).toBe(3);
     expect(llm.results[0].filter((x) => /budget spent/.test(x.output)).length).toBe(3);
   });
 
   it("rejects malformed tool arguments without executing them", async () => {
     const llm = scriptedLLM([[{ name: "fetch_page", args: { link: "https://x.dev" } }, { name: "search_web", args: {} }]]);
-    await runResearch({ llm, providerName: "Acme", query: "acme", composio, seedSources: [], emit: () => {}, fetchImpl: fakeFetch });
+    await runResearch({ llm, providerName: "Acme", query: "acme", composio, seedSources: [], emit: () => {}, fetchImpl: fakeFetch, resolveHost: publicDns });
     expect(llm.results[0].every((x) => x.isError && /Invalid arguments/.test(x.output))).toBe(true);
   });
 
   it("fails clearly when nothing was retrieved and no notes were written", async () => {
     const llm = scriptedLLM([], "");
-    await expect(runResearch({ llm, providerName: "Acme", query: "acme", composio, seedSources: [], emit: () => {}, fetchImpl: fakeFetch })).rejects.toBeInstanceOf(PipelineError);
+    await expect(runResearch({ llm, providerName: "Acme", query: "acme", composio, seedSources: [], emit: () => {}, fetchImpl: fakeFetch, resolveHost: publicDns })).rejects.toBeInstanceOf(PipelineError);
   });
 });
 

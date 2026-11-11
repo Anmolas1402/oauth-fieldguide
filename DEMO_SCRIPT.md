@@ -22,6 +22,11 @@ Type **Xero** and press **Investigate provider**. While it runs, narrate the pro
 
 > "Nothing on this screen is a timer. Each row is emitted by the server when that request finishes."
 
+Xero's main documentation does not load for this tool (it returns almost no text), so expect the
+Xero guide to open with an **Incomplete investigation** banner listing what is missing. Say so
+plainly: that banner is the product working, not failing. For a run that usually completes, use
+**Linear** or **Zoom** instead.
+
 ## 1:00 Read a guide (60 s)
 
 While Xero finishes, switch to the saved **Gmail** guide (or stay on Xero if it has finished).
@@ -39,6 +44,10 @@ Open **6. Sources and confidence**.
 - Every source is a page this run actually retrieved, with which claims it supports.
 - **Validator adjustments:** "here the model claimed something as verified, but the quote was not
   in the page it cited, so the code downgraded it to inferred. The model does not get the last word."
+- Be precise about what "verified" means: code confirms the quote is on the retrieved page, and
+  downgrades a claim that something is *not* required unless the quote says so. Code does not
+  prove that a quote supports every part of a claim. The four saved guides were also checked by hand
+  against their pages on 11 November (EVIDENCE.md, item 18); a fresh live run has not been.
 - Open the investigation log: searches, pages read, pages that failed.
 
 ## 2:40 Hand off (20 s)

@@ -7,7 +7,7 @@ export const STATUS_LABEL: Record<Status, string> = {
 };
 
 export const STATUS_HELP: Record<Status, string> = {
-  verified: "A page retrieved in this investigation states this, and the quote was found in that page.",
+  verified: "Backed by a quote that code found on a page retrieved in this investigation. The code checks that the quote is on the page, not that it proves every part of the claim, so read the quote.",
   inferred: "Reasoned from retrieved material or general knowledge. No retrieved page states it outright, so confirm before relying on it.",
   unknown: "The investigation looked for this and could not establish it.",
 };
@@ -86,4 +86,26 @@ export function formatDate(iso: string): string {
 
 export function guideKey(g: Guide): string {
   return (g.composio.slug ?? g.provider.name).toLowerCase().replace(/[^a-z0-9]+/g, "_");
+}
+
+/**
+ * Why an investigation should be treated as incomplete. Computed from the guide itself (not stored), so
+ * it applies to saved guides too. An empty list means none of these gaps were detected, not that the
+ * guide is guaranteed correct.
+ */
+export function investigationGaps(g: Guide): string[] {
+  const gaps: string[] = [];
+  const name = g.provider.name;
+  const official = g.validation.officialPagesRead;
+  if (official === 0)
+    gaps.push(`No page from ${name}'s own documentation could be retrieved; claims rest on Composio and third-party pages.`);
+  else if (official === 1) gaps.push(`Only one page of ${name}'s own documentation was retrieved.`);
+  const steps = g.steps.length;
+  const verifiedSteps = g.steps.filter((s) => s.status === "verified").length;
+  if (steps < 3) gaps.push(`Only ${steps} setup step${steps === 1 ? "" : "s"} could be described.`);
+  else if (verifiedSteps * 2 < steps)
+    gaps.push(`Only ${verifiedSteps} of ${steps} setup steps are supported by a quote from a retrieved page.`);
+  if (g.externalReview.requirement === "unknown")
+    gaps.push(`Whether ${name} reviews or approves the app before launch could not be established.`);
+  return gaps;
 }

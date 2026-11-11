@@ -103,6 +103,15 @@ export function getLLM(): LLM {
 // ---------------------------------------------------------------------------------------------
 // Gemini (Google Gen AI SDK, generateContent)
 
+/**
+ * Models that failed with a transient error (overload, quota, timeout) in this process, and until
+ * when to try others first. Shared across investigations so that one slow failure is paid once, not
+ * by every run in the next few minutes.
+ */
+const modelCooldown = new Map<string, number>();
+const COOLDOWN_MS = 10 * 60 * 1000;
+export const resetModelCooldown = () => modelCooldown.clear();
+
 const GEMINI_BLOCKED = new Set(["SAFETY", "PROHIBITED_CONTENT", "BLOCKLIST", "SPII", "RECITATION", "IMAGE_SAFETY"]);
 
 function geminiThinking(fallback: ThinkingLevel): ThinkingLevel {
@@ -114,41 +123,98 @@ export function geminiDriver(model: string, client?: GoogleGenAI, candidates?: s
   // Few SDK retries: an overloaded model is better answered by moving to the next candidate.
   const ai = client ?? new GoogleGenAI({ apiKey: geminiKey(), httpOptions: { retryOptions: { attempts: 1 } } });
   const models = candidates ?? (env("GEMINI_MODEL") ? [model] : GEMINI_FALLBACK_MODELS);
-  let current = 0;
+  // Start from the first model that has not failed recently (overloaded, out of quota, timed out).
+  const firstHealthy = models.findIndex((m) => (modelCooldown.get(m) ?? 0) <= Date.now());
+  let current = firstHealthy === -1 ? 0 : firstHealthy;
   let calls = 0;
-  const skipped: string[] = [];
+  const skipped: string[] = models.slice(0, current).map((m) => `${m} (failed in the last 10 minutes, skipped)`);
 
   /** Calls the current model; on overload, quota or missing model, moves on and stays on the one that answered. */
   type Params = Omit<Parameters<typeof ai.models.generateContent>[0], "model">;
 
   /** Overloaded, out of quota, server error, or our own request timeout (not a user cancel). */
-  const isTransient = (err: unknown, params: Params) => {
-    if (params.config?.abortSignal?.aborted) return false;
+  const isTransient = (err: unknown, params: Params, userSignal?: AbortSignal) => {
+    if (userSignal?.aborted || (!userSignal && params.config?.abortSignal?.aborted)) return false;
     if (err instanceof ApiError) return [404, 429, 500, 502, 503, 504].includes(err.status);
     return err instanceof Error && /abort|timeout|timed out|fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|socket hang up|network/i.test(`${err.name} ${err.message}`);
   };
   const statusOf = (err: unknown) =>
-    err instanceof ApiError ? `HTTP ${err.status}` : err instanceof Error && /fetch failed|ECONN|ENOTFOUND|socket|network/i.test(err.message) ? "network error" : "timed out";
+    err instanceof ApiError ? `HTTP ${err.status}${err.status === 429 && /PerDay/i.test(err.message) ? ", daily quota" : err.status === 429 ? ", rate limit" : ""}` : err instanceof Error && /fetch failed|ECONN|ENOTFOUND|socket|network/i.test(err.message) ? "network error" : "timed out";
+
+  type StreamResult = {
+    text: string;
+    candidates: { finishReason?: string }[];
+    promptFeedback?: { blockReason?: string };
+  };
+
+  /**
+   * One streamed request. A model that is overloaded sometimes holds the connection open instead of
+   * answering 503, so waiting for the whole response wastes minutes. Streaming (with thought
+   * summaries, which arrive while the model thinks) shows quickly whether the model is working: no
+   * chunk within GEMINI_FIRST_CHUNK_MS (default 45 s), or a gap of GEMINI_STALL_MS (default 60 s)
+   * between chunks, aborts the request and the caller moves on to the next model.
+   */
+  const streamOnce = async (model: string, params: Params, userSignal?: AbortSignal): Promise<StreamResult> => {
+    const firstMs = Number(env("GEMINI_FIRST_CHUNK_MS") || 45_000);
+    const stallMs = Number(env("GEMINI_STALL_MS") || 60_000);
+    const ctrl = new AbortController();
+    const onUserAbort = () => ctrl.abort(userSignal?.reason);
+    userSignal?.addEventListener("abort", onUserAbort);
+    let stalled = false;
+    let timer = setTimeout(() => ((stalled = true), ctrl.abort()), firstMs);
+    try {
+      const stream = await ai.models.generateContentStream({
+        ...params,
+        model,
+        config: {
+          ...params.config,
+          abortSignal: ctrl.signal,
+          thinkingConfig: { ...params.config?.thinkingConfig, includeThoughts: true },
+        },
+      });
+      let text = "";
+      let finishReason: string | undefined;
+      let blockReason: string | undefined;
+      for await (const chunk of stream) {
+        clearTimeout(timer);
+        timer = setTimeout(() => ((stalled = true), ctrl.abort()), stallMs);
+        blockReason ??= chunk.promptFeedback?.blockReason;
+        const cand = chunk.candidates?.[0];
+        for (const part of cand?.content?.parts ?? []) if (typeof part.text === "string" && !part.thought) text += part.text;
+        finishReason = cand?.finishReason ?? finishReason;
+      }
+      return { text, candidates: [{ finishReason }], promptFeedback: blockReason ? { blockReason } : undefined };
+    } catch (err) {
+      if (stalled && !userSignal?.aborted) {
+        const e = new Error(`${model} sent no response within the time limit`);
+        e.name = "TimeoutError";
+        throw e;
+      }
+      throw err;
+    } finally {
+      clearTimeout(timer);
+      userSignal?.removeEventListener("abort", onUserAbort);
+    }
+  };
 
   /**
    * For a standalone request (no conversation state), any candidate model will do: try each in
    * turn, starting with the one in use, for a few rounds with backoff.
    */
-  const generateAnyModel = async (params: Params) => {
+  const generateAnyModel = async (params: Params, userSignal?: AbortSignal) => {
     let lastErr: unknown;
     for (let round = 0; round < 3; round++) {
       for (let k = 0; k < models.length; k++) {
         const i = (current + k) % models.length;
         try {
-          const res = await ai.models.generateContent({ ...params, model: models[i] });
+          const res = await streamOnce(models[i], params, userSignal);
           calls++;
-          if (i !== current) {
-            skipped.push(`${models[current]} (unavailable for the guide-writing step)`);
-            current = i;
-          }
+          current = i;
           return res;
         } catch (err) {
-          if (!isTransient(err, params)) throw err;
+          if (!isTransient(err, params, userSignal)) throw err;
+          modelCooldown.set(models[i], Date.now() + COOLDOWN_MS);
+          skipped.push(`${models[i]} (${statusOf(err)}, guide-writing step)`);
           lastErr = err;
         }
       }
@@ -166,6 +232,7 @@ export function geminiDriver(model: string, client?: GoogleGenAI, candidates?: s
         return res;
       } catch (err) {
         if (!isTransient(err, params)) throw err;
+        modelCooldown.set(models[current], Date.now() + COOLDOWN_MS);
         if (current < models.length - 1) {
           skipped.push(`${models[current]} (${statusOf(err)})`);
           current++;
@@ -259,9 +326,8 @@ export function geminiDriver(model: string, client?: GoogleGenAI, candidates?: s
             thinkingConfig: { thinkingLevel: geminiThinking(ThinkingLevel.MEDIUM) },
             maxOutputTokens: 32000,
             httpOptions: { timeout: 240_000 },
-            abortSignal: opts.signal,
           },
-        });
+        }, opts.signal);
       let res;
       try {
         res = await request(true);
@@ -273,7 +339,7 @@ export function geminiDriver(model: string, client?: GoogleGenAI, candidates?: s
       }
       const reason = checkStop(res);
       if (reason === "MAX_TOKENS") throw new ModelStopError("compose_truncated", "The guide was cut off before it finished (output limit reached).");
-      return res.text ?? "";
+      return res.text;
     },
   };
 }
@@ -348,6 +414,8 @@ export function describeModelError(err: unknown): { code: string; message: strin
   if (err instanceof Anthropic.APIConnectionError) return { code: "model_network", message: "Could not reach the model API from the server." };
   if (err instanceof Error && !(err instanceof ApiError) && /fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|socket hang up/i.test(err.message))
     return { code: "model_network", message: "The connection to the model API dropped. Try again." };
+  if (err instanceof Error && err.name === "TimeoutError" && /sent no response/.test(err.message))
+    return { code: "model_unavailable", message: "No model answered in time; they may be overloaded. Saved guides still open. Try again in a few minutes." };
   if (status === undefined) return null;
   const detail = err instanceof Error ? err.message.replace(/\s+/g, " ").slice(0, 240) : "";
   if (status === 401 || (status === 400 && /api key/i.test(detail)))

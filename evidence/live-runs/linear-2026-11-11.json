@@ -1,0 +1,769 @@
+{
+  "summary": {
+    "query": "Linear",
+    "startedAt": "2026-11-11T12:58:00.752Z",
+    "durationMs": 139144,
+    "outcome": "guide",
+    "error": null,
+    "model": "gemini/gemini-3.1-flash-lite",
+    "modelCalls": [
+      "[investigate] Linear: 5 model calls on gemini/gemini-3.1-flash-lite"
+    ],
+    "composio": {
+      "slug": "LINEAR",
+      "managedOAuth": true,
+      "catalogueList": "managed"
+    },
+    "searches": [
+      {
+        "query": "Linear OAuth app registration documentation developer",
+        "results": 8
+      }
+    ],
+    "pagesRetrieved": [
+      {
+        "id": "S4",
+        "url": "https://linear.app/developers",
+        "authority": "official"
+      },
+      {
+        "id": "S5",
+        "url": "https://linear.app/developers/oauth-2-0-authentication",
+        "authority": "official"
+      },
+      {
+        "id": "S6",
+        "url": "https://linear.app/developers/oauth-app-manifests",
+        "authority": "official"
+      },
+      {
+        "id": "S7",
+        "url": "https://linear.app/developers/integration-directory",
+        "authority": "official"
+      },
+      {
+        "id": "S8",
+        "url": "https://linear.app/developers/oauth-actor-authorization",
+        "authority": "official"
+      }
+    ],
+    "fetchFailures": [],
+    "officialPagesRead": 5,
+    "counts": {
+      "verified": 10,
+      "inferred": 2,
+      "unknown": 1
+    },
+    "steps": [
+      "Create a management workspace [verified, human_only]",
+      "Open OAuth app creation [verified, human_only]",
+      "Register the app [inferred, agent_assists]",
+      "Add redirect URI [verified, agent_assists]",
+      "Create Composio auth config [inferred, agent_assists]"
+    ],
+    "review": {
+      "requirement": "none",
+      "timeline": "unknown"
+    },
+    "validatorAdjustments": 1,
+    "thirdPartyOnly": [],
+    "incompleteGaps": [],
+    "unresolved": [
+      "Whether the application needs to be listed in the official Linear Integration Directory.",
+      "Verification of specific workspace-level permissions for API app management."
+    ]
+  },
+  "events": [
+    {
+      "type": "stage",
+      "id": "resolve",
+      "state": "running"
+    },
+    {
+      "type": "activity",
+      "stage": "resolve",
+      "activity": {
+        "id": "catalogue",
+        "kind": "composio",
+        "label": "Composio managed-auth catalogue",
+        "url": "https://docs.composio.dev/toolkits/managed-auth",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "resolve",
+      "activity": {
+        "id": "catalogue",
+        "kind": "composio",
+        "label": "Composio managed-auth catalogue",
+        "url": "https://docs.composio.dev/toolkits/managed-auth",
+        "state": "done",
+        "detail": "401 OAuth toolkits listed"
+      }
+    },
+    {
+      "type": "stage",
+      "id": "resolve",
+      "state": "done",
+      "detail": "Matched Composio toolkit Linear (LINEAR)"
+    },
+    {
+      "type": "stage",
+      "id": "composio",
+      "state": "running"
+    },
+    {
+      "type": "activity",
+      "stage": "composio",
+      "activity": {
+        "id": "toolkit",
+        "kind": "composio",
+        "label": "Composio toolkit page: Linear",
+        "url": "https://docs.composio.dev/toolkits/linear",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "composio",
+      "activity": {
+        "id": "toolkit",
+        "kind": "composio",
+        "label": "Composio toolkit page: Linear",
+        "url": "https://docs.composio.dev/toolkits/linear",
+        "state": "done",
+        "detail": "auth: OAUTH2, API_KEY"
+      }
+    },
+    {
+      "type": "composio",
+      "facts": {
+        "listed": true,
+        "name": "Linear",
+        "slug": "LINEAR",
+        "category": "project management",
+        "authSchemes": [
+          "OAUTH2",
+          "API_KEY"
+        ],
+        "managedOAuth": true,
+        "catalogueList": "managed",
+        "customGuideUrl": null,
+        "faq": [],
+        "matchNote": null,
+        "alternatives": [
+          {
+            "name": "Linear MCP",
+            "slug": "LINEAR_MCP"
+          }
+        ]
+      }
+    },
+    {
+      "type": "stage",
+      "id": "composio",
+      "state": "done",
+      "detail": "Composio-managed OAuth app is available; bringing your own is optional"
+    },
+    {
+      "type": "stage",
+      "id": "research",
+      "state": "running"
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_4697874848920041425",
+        "kind": "search",
+        "label": "Linear OAuth app registration documentation developer",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_4697874848920041425",
+        "kind": "search",
+        "label": "Linear OAuth app registration documentation developer",
+        "state": "done",
+        "detail": "8 results via DuckDuckGo"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_10039701750354855680",
+        "kind": "fetch",
+        "label": "https://linear.app/developers/oauth-2-0-authentication",
+        "url": "https://linear.app/developers/oauth-2-0-authentication",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_10039701750354856797",
+        "kind": "fetch",
+        "label": "https://linear.app/developers",
+        "url": "https://linear.app/developers",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_10039701750354856797",
+        "kind": "fetch",
+        "label": "Documentation",
+        "url": "https://linear.app/developers",
+        "state": "done",
+        "detail": "S4 · 1,970 chars"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_10039701750354855680",
+        "kind": "fetch",
+        "label": "OAuth 2.0 authentication",
+        "url": "https://linear.app/developers/oauth-2-0-authentication",
+        "state": "done",
+        "detail": "S5 · 17,580 chars"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12310283504103967566",
+        "kind": "fetch",
+        "label": "https://linear.app/developers/integration-directory",
+        "url": "https://linear.app/developers/integration-directory",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12310283504103966851",
+        "kind": "fetch",
+        "label": "https://linear.app/developers/oauth-app-manifests",
+        "url": "https://linear.app/developers/oauth-app-manifests",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12310283504103966136",
+        "kind": "fetch",
+        "label": "https://linear.app/developers/oauth-actor-authorization",
+        "url": "https://linear.app/developers/oauth-actor-authorization",
+        "state": "running"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12310283504103966851",
+        "kind": "fetch",
+        "label": "OAuth application manifests",
+        "url": "https://linear.app/developers/oauth-app-manifests",
+        "state": "done",
+        "detail": "S6 · 10,225 chars"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12310283504103967566",
+        "kind": "fetch",
+        "label": "Integration Directory",
+        "url": "https://linear.app/developers/integration-directory",
+        "state": "done",
+        "detail": "S7 · 4,410 chars"
+      }
+    },
+    {
+      "type": "activity",
+      "stage": "research",
+      "activity": {
+        "id": "call_12310283504103966136",
+        "kind": "fetch",
+        "label": "OAuth actor authorization",
+        "url": "https://linear.app/developers/oauth-actor-authorization",
+        "state": "done",
+        "detail": "S8 · 3,651 chars"
+      }
+    },
+    {
+      "type": "stage",
+      "id": "research",
+      "state": "done",
+      "detail": "1 searches, 5 pages read; used gemini-3.6-flash because gemini-3.8-flash (HTTP 503) was unavailable"
+    },
+    {
+      "type": "stage",
+      "id": "compose",
+      "state": "running"
+    },
+    {
+      "type": "stage",
+      "id": "compose",
+      "state": "done",
+      "detail": "5 setup steps drafted"
+    },
+    {
+      "type": "stage",
+      "id": "verify",
+      "state": "running"
+    },
+    {
+      "type": "stage",
+      "id": "verify",
+      "state": "done",
+      "detail": "10 verified, 2 inferred, 1 unknown; 1 adjustments"
+    }
+  ],
+  "guide": {
+    "providerStatus": "identified",
+    "provider": {
+      "name": "Linear",
+      "description": "Linear is a project management and issue tracking tool for modern teams, supporting standard OAuth 2.0 and API Key authentication.",
+      "assumption": null
+    },
+    "oauthAppKind": "OAuth2 Application",
+    "authMethod": {
+      "text": "Linear supports standard OAuth 2.0 authorization code flow, and optional PKCE for public/mobile clients.",
+      "status": "verified",
+      "sourceIds": [
+        "S5"
+      ],
+      "quote": "Linear supports OAuth2 authentication, which is recommended if you’re building applications to integrate with Linear."
+    },
+    "difficulty": {
+      "level": "low",
+      "rationale": "Linear has a straightforward developer portal, clear documentation, and support for URL-based configuration of new OAuth apps."
+    },
+    "handsOnEffort": {
+      "estimate": "15-30 minutes",
+      "basis": "Includes navigating to the Linear settings console, creating the app, adding the redirect URI, and copying credentials into the Composio dashboard."
+    },
+    "externalReview": {
+      "requirement": "none",
+      "summary": {
+        "text": "There is no mandatory review process for private or public apps to function.",
+        "status": "verified",
+        "sourceIds": [
+          "S6"
+        ],
+        "quote": "Whether the app should be available only in the current workspace or installable by other workspaces. Allowed values: private, public"
+      },
+      "triggers": [],
+      "publishedTimeline": {
+        "text": "The provider publishes no timeline in the retrieved documentation.",
+        "status": "unknown",
+        "sourceIds": [],
+        "quote": null
+      }
+    },
+    "prerequisites": [
+      {
+        "kind": "account",
+        "text": "A Linear workspace and administrator account.",
+        "status": "verified",
+        "sourceIds": [
+          "S5"
+        ],
+        "quote": "It is highly recommended you create a workspace for the purpose of managing the OAuth2 Application, as each admin user will have access."
+      }
+    ],
+    "console": {
+      "name": "Linear Settings",
+      "url": "https://linear.app/settings/api/applications/new",
+      "urlSeenInSources": true
+    },
+    "redirectRules": [
+      {
+        "text": "Must be an absolute HTTPS URL (or HTTP for localhost). Min 1, Max 32 URLs.",
+        "status": "verified",
+        "sourceIds": [
+          "S6"
+        ],
+        "quote": "Minimum items: 1 Maximum items: 32"
+      }
+    ],
+    "scopes": {
+      "model": {
+        "text": "Scopes are requested as a comma-separated string in the authorization request.",
+        "status": "verified",
+        "sourceIds": [
+          "S5"
+        ],
+        "quote": "Comma separated list of scopes"
+      },
+      "examples": [
+        {
+          "scope": "read",
+          "grants": "Read access for the user's account.",
+          "tier": null,
+          "sourceIds": [
+            "S5"
+          ],
+          "seenInSource": true
+        },
+        {
+          "scope": "write",
+          "grants": "Write access for the user's account.",
+          "tier": null,
+          "sourceIds": [
+            "S5"
+          ],
+          "seenInSource": true
+        },
+        {
+          "scope": "issues:create",
+          "grants": "Allows creating and updating issues.",
+          "tier": null,
+          "sourceIds": [
+            "S5"
+          ],
+          "seenInSource": true
+        }
+      ]
+    },
+    "steps": [
+      {
+        "title": "Create a management workspace",
+        "action": "Create a dedicated workspace to manage your OAuth app.",
+        "where": "Linear Workspace Settings",
+        "link": null,
+        "actor": "human_only",
+        "actorReason": "Administrators must manage the OAuth application settings within a specific workspace context.",
+        "text": "It is recommended to create a dedicated workspace for managing the OAuth application to ensure all admins have access.",
+        "status": "verified",
+        "sourceIds": [
+          "S5"
+        ],
+        "quote": "It is highly recommended you create a workspace for the purpose of managing the OAuth2 Application",
+        "linkSeenInSources": false
+      },
+      {
+        "title": "Open OAuth app creation",
+        "action": "Navigate to the OAuth application creation page.",
+        "where": "Linear Settings > API",
+        "link": "https://linear.app/settings/api/applications/new",
+        "actor": "human_only",
+        "actorReason": "Accessing the developer settings page requires manual user intervention.",
+        "text": "Go to the OAuth2 Application creation page in your workspace settings.",
+        "status": "verified",
+        "sourceIds": [
+          "S5"
+        ],
+        "quote": "Create a new OAuth2 Application",
+        "linkSeenInSources": true
+      },
+      {
+        "title": "Register the app",
+        "action": "Provide app details including name, description, and client URI.",
+        "where": "Linear Settings > API > New Application",
+        "link": "https://linear.app/settings/api/applications/new",
+        "actor": "agent_assists",
+        "actorReason": "An agent can suggest the required field contents, but a human must perform the registration.",
+        "text": "Fill in the application details and ensure you choose the correct distribution mode.",
+        "status": "inferred",
+        "sourceIds": [
+          "S6"
+        ],
+        "quote": null,
+        "linkSeenInSources": true
+      },
+      {
+        "title": "Add redirect URI",
+        "action": "Input the redirect URI provided by your Composio auth configuration.",
+        "where": "Linear Settings > API > New Application",
+        "link": null,
+        "actor": "agent_assists",
+        "actorReason": "The agent can provide the redirect URI value, but the user must save it in the Linear dashboard.",
+        "text": "Enter your callback redirect URL in the OAuth application settings.",
+        "status": "verified",
+        "sourceIds": [
+          "S6"
+        ],
+        "quote": "oauth.redirect_uris: A redirect URI registered for the OAuth app.",
+        "linkSeenInSources": false
+      },
+      {
+        "title": "Create Composio auth config",
+        "action": "Create a new Auth Config in the Composio dashboard.",
+        "where": "Composio Dashboard",
+        "link": "https://dashboard.composio.dev/~/project/auth-configs",
+        "actor": "agent_assists",
+        "actorReason": "The agent can guide the user through the dashboard UI steps.",
+        "text": "Create an auth config for Linear in Composio and paste your Client ID and Secret obtained from the Linear application page.",
+        "status": "inferred",
+        "sourceIds": [
+          "S3"
+        ],
+        "quote": null,
+        "linkSeenInSources": true
+      }
+    ],
+    "division": {
+      "agentPrepares": [
+        "Define the app display name and description.",
+        "Prepare the redirect URI string for the Linear registration form."
+      ],
+      "agentAssists": [
+        "Guide the developer through the Linear settings UI.",
+        "Provide the client ID and secret copying steps."
+      ],
+      "humanOnly": [
+        "Log in to the Linear dashboard.",
+        "Save the app configuration in Linear settings.",
+        "Securely store the client secret."
+      ]
+    },
+    "risks": [
+      {
+        "kind": "security",
+        "text": "Rotating the client secret invalidates all current client-credentials tokens immediately.",
+        "status": "verified",
+        "sourceIds": [
+          "S5"
+        ],
+        "quote": "Rotating your client secret immediately invalidates any client credentials tokens issued for your application."
+      },
+      {
+        "kind": "limit",
+        "text": "The 1,000-token limit for client-credentials is enforced via asynchronous cleanup.",
+        "status": "verified",
+        "sourceIds": [
+          "S5"
+        ],
+        "quote": "The 1,000-token limit is enforced through asynchronous cleanup, not a strict issuance ceiling."
+      }
+    ],
+    "unresolved": [
+      "Whether the application needs to be listed in the official Linear Integration Directory.",
+      "Verification of specific workspace-level permissions for API app management."
+    ],
+    "nextActions": [
+      "Create a dedicated workspace for application management.",
+      "Register your OAuth app in the Linear developer portal.",
+      "Add the redirect URI provided by Composio to your Linear app configuration.",
+      "Complete the custom auth config in the Composio dashboard.",
+      "Test authentication with a local dev environment."
+    ],
+    "meta": {
+      "query": "Linear",
+      "investigatedAt": "2026-11-11T13:00:19.886Z",
+      "model": "gemini/gemini-3.1-flash-lite",
+      "durationMs": 139133,
+      "origin": "live"
+    },
+    "composio": {
+      "listed": true,
+      "name": "Linear",
+      "slug": "LINEAR",
+      "category": "project management",
+      "authSchemes": [
+        "OAUTH2",
+        "API_KEY"
+      ],
+      "managedOAuth": true,
+      "catalogueList": "managed",
+      "customGuideUrl": null,
+      "faq": [],
+      "matchNote": null,
+      "alternatives": [
+        {
+          "name": "Linear MCP",
+          "slug": "LINEAR_MCP"
+        }
+      ]
+    },
+    "sources": [
+      {
+        "id": "S1",
+        "url": "https://docs.composio.dev/toolkits/linear",
+        "title": "Linear toolkit (Composio docs)",
+        "kind": "composio",
+        "authority": "composio",
+        "retrievedAt": "2026-11-11T12:58:01.948Z",
+        "chars": 353,
+        "truncated": false
+      },
+      {
+        "id": "S2",
+        "url": "https://docs.composio.dev/toolkits/managed-auth",
+        "title": "Managed OAuth apps catalogue (Composio docs)",
+        "kind": "composio",
+        "authority": "composio",
+        "retrievedAt": "2026-11-11T12:58:01.459Z",
+        "chars": 1677,
+        "truncated": true
+      },
+      {
+        "id": "S3",
+        "url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app",
+        "title": "Managed vs custom auth (Composio docs)",
+        "kind": "composio",
+        "authority": "composio",
+        "retrievedAt": "2026-11-11T12:58:02.326Z",
+        "chars": 4571,
+        "truncated": false
+      },
+      {
+        "id": "S4",
+        "url": "https://linear.app/developers",
+        "title": "Documentation",
+        "kind": "provider_page",
+        "authority": "official",
+        "retrievedAt": "2026-11-11T12:59:00.146Z",
+        "chars": 1970,
+        "truncated": false
+      },
+      {
+        "id": "S5",
+        "url": "https://linear.app/developers/oauth-2-0-authentication",
+        "title": "OAuth 2.0 authentication",
+        "kind": "provider_page",
+        "authority": "official",
+        "retrievedAt": "2026-11-11T12:59:00.214Z",
+        "chars": 17580,
+        "truncated": false
+      },
+      {
+        "id": "S6",
+        "url": "https://linear.app/developers/oauth-app-manifests",
+        "title": "OAuth application manifests",
+        "kind": "provider_page",
+        "authority": "official",
+        "retrievedAt": "2026-11-11T12:59:04.502Z",
+        "chars": 10225,
+        "truncated": false
+      },
+      {
+        "id": "S7",
+        "url": "https://linear.app/developers/integration-directory",
+        "title": "Integration Directory",
+        "kind": "provider_page",
+        "authority": "official",
+        "retrievedAt": "2026-11-11T12:59:05.393Z",
+        "chars": 4410,
+        "truncated": false
+      },
+      {
+        "id": "S8",
+        "url": "https://linear.app/developers/oauth-actor-authorization",
+        "title": "OAuth actor authorization",
+        "kind": "provider_page",
+        "authority": "official",
+        "retrievedAt": "2026-11-11T12:59:05.413Z",
+        "chars": 3651,
+        "truncated": false
+      }
+    ],
+    "log": {
+      "searches": [
+        {
+          "query": "Linear OAuth app registration documentation developer",
+          "results": [
+            {
+              "url": "https://linear.app/developers/oauth-2-0-authentication",
+              "title": "OAuth 2.0 authentication - Linear Developers"
+            },
+            {
+              "url": "https://linear.app/developers",
+              "title": "Linear Developers"
+            },
+            {
+              "url": "https://nango.dev/docs/api-integrations/linear/how-to-register-your-own-linear-api-oauth-app",
+              "title": "How to register your own Linear OAuth app - Nango Docs"
+            },
+            {
+              "url": "https://docs.workato.com/connectors/linear.html",
+              "title": "Workato connectors - Linear | Workato docs"
+            },
+            {
+              "url": "https://better-auth.com/docs/authentication/linear",
+              "title": "Linear - Better Auth"
+            },
+            {
+              "url": "https://rollout.com/integration-guides/linear/how-to-build-a-public-linear-integration-building-the-auth-flow",
+              "title": "How to build a Linear API integration - rollout.com"
+            },
+            {
+              "url": "https://docs.arcade.dev/en/references/auth-providers/linear",
+              "title": "Linear | Arcade Docs"
+            },
+            {
+              "url": "https://apps.make.com/linear",
+              "title": "Linear - Apps Documentation"
+            }
+          ]
+        }
+      ],
+      "fetches": [
+        {
+          "url": "https://linear.app/developers",
+          "ok": true,
+          "sourceId": "S4",
+          "detail": "1,970 characters read"
+        },
+        {
+          "url": "https://linear.app/developers/oauth-2-0-authentication",
+          "ok": true,
+          "sourceId": "S5",
+          "detail": "17,580 characters read"
+        },
+        {
+          "url": "https://linear.app/developers/oauth-app-manifests",
+          "ok": true,
+          "sourceId": "S6",
+          "detail": "10,225 characters read"
+        },
+        {
+          "url": "https://linear.app/developers/integration-directory",
+          "ok": true,
+          "sourceId": "S7",
+          "detail": "4,410 characters read"
+        },
+        {
+          "url": "https://linear.app/developers/oauth-actor-authorization",
+          "ok": true,
+          "sourceId": "S8",
+          "detail": "3,651 characters read"
+        }
+      ]
+    },
+    "validation": {
+      "adjustments": [
+        {
+          "path": "steps[4]",
+          "change": "verified → inferred",
+          "reason": "the quoted text was not found in the cited page: \"Click Create Auth Config, Select the toolkit, Choose the auth scheme, Follow the dashboard instructions for the required credential fields\""
+        }
+      ],
+      "counts": {
+        "verified": 10,
+        "inferred": 2,
+        "unknown": 1
+      },
+      "thirdPartyOnly": [],
+      "officialPagesRead": 5
+    }
+  }
+}

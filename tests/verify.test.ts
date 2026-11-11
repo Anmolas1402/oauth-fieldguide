@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { GuideDraftSchema } from "../shared/schema.ts";
-import { DURATION_RE, NO_TIMELINE_TEXT, quoteFound, verifyDraft } from "../server/verify.ts";
+import { DURATION_RE, NO_TIMELINE_TEXT, quoteFound, verifyDraft, type VerifySource } from "../server/verify.ts";
 import { makeDraft, sources } from "./fixtures.ts";
 
 describe("quoteFound", () => {
@@ -135,4 +135,34 @@ describe("schema", () => {
 describe("DURATION_RE", () => {
   it.each(["2-3 weeks", "up to 10 business days", "several weeks", "six weeks"])("matches %s", (s) => expect(DURATION_RE.test(s)).toBe(true));
   it.each(["No timeline is published.", "OAuth 2.0 with 3 scopes"])("ignores %s", (s) => expect(DURATION_RE.test(s)).toBe(false));
+});
+
+describe("quote matching across page formats", () => {
+  const html = "If your app uses customer data, then you need to meet the protected customer data requirements [/docs/apps/launch/protected-customer-data#request] and then apply for access in the **API access requests** > Protected section.";
+  const md = "If your app uses customer data, then you need to meet the [protected customer data requirements](https://shopify.dev/docs/apps/launch/protected-customer-data#request) and then apply for access in the **API access requests** > Protected section.";
+  const quote = "If your app uses customer data, then you need to meet the protected customer data requirements and then apply for access in the API access requests > Protected section.";
+  it("ignores relative link targets that html-to-text appends", () => expect(quoteFound(quote, html)).toBe(true));
+  it("ignores Markdown link targets and keeps the link text", () => expect(quoteFound(quote, md)).toBe(true));
+  it("matches ellipsis excerpts on a Markdown page", () =>
+    expect(quoteFound("If your app uses customer data, then you need to meet the protected customer data requirements … apply for access in the API access requests", md)).toBe(true));
+  it("still rejects wording that is not on the page", () =>
+    expect(quoteFound("If your app uses customer data, then Shopify approves it automatically within two days.", md)).toBe(false));
+});
+
+describe("absence claims need a quote that states the absence", () => {
+  const src: VerifySource[] = [{ id: "S2", url: "https://developers.acme.dev/apps", text: "Distribution: whether the app is available only in the current workspace or installable by other workspaces. Allowed values: private, public. Apps listed in the directory are not reviewed." }];
+  const run = (text: string, quote: string) => {
+    const d = makeDraft();
+    d.externalReview.summary = { text, status: "verified", sourceIds: ["S2"], quote };
+    return verifyDraft(d, src).draft.externalReview.summary;
+  };
+  it("downgrades 'no review' backed by a quote that only lists distribution modes", () => {
+    expect(run("There is no mandatory review process for private or public apps.", "Allowed values: private, public").status).toBe("inferred");
+  });
+  it("keeps 'not reviewed' when the quote says it", () => {
+    expect(run("Directory apps are not reviewed.", "Apps listed in the directory are not reviewed.").status).toBe("verified");
+  });
+  it("leaves positive claims alone", () => {
+    expect(run("Apps can be private or public.", "Allowed values: private, public").status).toBe("verified");
+  });
 });
