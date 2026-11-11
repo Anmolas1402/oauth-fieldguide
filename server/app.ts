@@ -7,6 +7,7 @@ import { GuideSchema, type Guide, type PipelineEvent } from "../shared/schema.ts
 import { hasModelCredentials, modelName } from "./llm.ts";
 import { investigate } from "./pipeline.ts";
 import { key } from "./resolve.ts";
+import { isPublicAddress } from "./netguard.ts";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 export const GUIDES_DIR = path.join(here, "..", "data", "guides");
@@ -117,7 +118,13 @@ export function createApp() {
       }
       const xff = c.req.header("x-forwarded-for");
       const ip = clientAddress(xff, socket, TRUSTED_HOPS);
-      console.log(`[ratelimit] forwarded-for entries: ${xff ? xff.split(",").length : 0}, trusted hops: ${TRUSTED_HOPS}`);
+      // Diagnostic without logging addresses: which entries are public, and where the edge's own client header sits.
+      const chain = (xff ?? "").split(",").map((s) => s.trim()).filter(Boolean);
+      const edge = c.req.header("cf-connecting-ip");
+      console.log(
+        `[ratelimit] forwarded-for entries: ${chain.length} (${chain.map((a) => (isPublicAddress(a) ? "public" : "private")).join(",")}), ` +
+          `cf-connecting-ip at index: ${edge ? chain.indexOf(edge) : "absent"}, trusted hops: ${TRUSTED_HOPS}, picked index: ${chain.indexOf(ip)}`,
+      );
       const blocked = allow(ip);
       if (blocked) return c.json({ error: blocked }, 429);
     }
