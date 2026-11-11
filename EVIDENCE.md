@@ -247,8 +247,13 @@ same pages):
     refused, and the rule has regression tests.
 22. **The rate limiter trusted client-supplied headers.** It keyed on `CF-Connecting-IP`, else the
     leftmost `X-Forwarded-For` entry. A client can set both, so anyone could bypass the 6-per-hour
-    limit by changing a header. It now uses the entry appended by the trusted proxy (one hop on
-    Render, configurable) or the socket address, and ignores `CF-Connecting-IP`.
+    limit by changing a header. It now uses the entry a fixed number of hops from the right
+    (configurable) or the socket address, and ignores `CF-Connecting-IP`. My first fix assumed one
+    hop on Render, which was wrong: a log line that records only whether each entry is public or
+    private (no addresses) showed production's header as visitor, Cloudflare edge, Render internal
+    (`public,public,private`). A request with a spoofed header gave four entries, with the spoofed one
+    leftmost. One hop therefore picked Render's internal address, so every visitor shared one bucket.
+    The Render default is now 3, and a test covers the observed chain.
 23. **Absence claims.** A live Linear run marked "There is no mandatory review process" as verified,
     with a quote that only lists distribution modes. A verified claim that something is absent or
     not required is now downgraded unless its quote contains a negation. Run against the audited

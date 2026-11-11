@@ -94,3 +94,16 @@ describe("rate-limit client address", () => {
     expect(results[6]).toMatch(/per hour/);
   });
 });
+
+describe("clientAddress on Render's observed chain", () => {
+  // Shape logged on production 2026-11-11: visitor, Cloudflare edge, Render internal.
+  it("picks the visitor, not Render's internal address, and ignores spoofed entries", () => {
+    expect(clientAddress("198.51.100.20, 172.70.1.1, 10.1.2.3", "10.1.2.4", 3)).toBe("198.51.100.20");
+    expect(clientAddress("9.9.9.9, 198.51.100.20, 172.70.1.1, 10.1.2.3", "10.1.2.4", 3)).toBe("198.51.100.20");
+  });
+  it("two visitors behind the same proxies get different keys", () => {
+    const a = clientAddress("198.51.100.20, 172.70.1.1, 10.1.2.3", "10.1.2.4", 3);
+    const b = clientAddress("198.51.100.21, 172.70.1.1, 10.1.2.3", "10.1.2.4", 3);
+    expect(a).not.toBe(b);
+  });
+});

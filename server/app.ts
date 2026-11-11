@@ -33,9 +33,10 @@ const CACHE_TTL = 6 * 60 * 60 * 1000;
 /**
  * Which address the per-IP limit counts against. X-Forwarded-For is client-controlled except for the
  * entries appended by proxies we actually sit behind, so only the entry TRUSTED_PROXY_HOPS from the
- * right is used (Render's proxy appends exactly one). With no trusted proxy, the socket address is
- * used and forwarded headers are ignored. CF-Connecting-IP is never trusted: we are not behind a
- * Cloudflare deployment we control, so a client could set it to anything.
+ * right is used. On Render that is 3: logged on production on 11 November, the header arrives as
+ * "<visitor>, <Cloudflare edge>, <Render internal>", and a client-supplied header only adds entries on
+ * the left. With no trusted proxy, the socket address is used and forwarded headers are ignored.
+ * CF-Connecting-IP is not read: it is only trustworthy when Cloudflare is guaranteed to be in front.
  */
 export function clientAddress(forwardedFor: string | undefined, socketAddress: string | undefined, trustedHops: number): string {
   if (trustedHops > 0 && forwardedFor) {
@@ -45,8 +46,8 @@ export function clientAddress(forwardedFor: string | undefined, socketAddress: s
   }
   return socketAddress ?? "unknown";
 }
-// Render sets RENDER=true and its proxy appends one X-Forwarded-For entry.
-const TRUSTED_HOPS = Number(process.env.TRUSTED_PROXY_HOPS ?? (process.env.RENDER ? 1 : 0));
+// Render sets RENDER=true; its edge (Cloudflare, then Render's own proxy) appends three entries.
+const TRUSTED_HOPS = Number(process.env.TRUSTED_PROXY_HOPS ?? (process.env.RENDER ? 3 : 0));
 
 export function allow(ip: string): string | null {
   const now = Date.now();

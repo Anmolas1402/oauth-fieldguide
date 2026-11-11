@@ -157,7 +157,7 @@ evidence/  the independent documentation check behind EVIDENCE.md
 | `API_PORT` | no | `8787` | API port in `npm run dev` |
 | `RATE_LIMIT_PER_HOUR` | no | `6` | Live investigations per IP per hour |
 | `DAILY_LIVE_RUN_CAP` | no | `60` | Live investigations per day across all users |
-| `TRUSTED_PROXY_HOPS` | no | `1` on Render, else `0` | How many X-Forwarded-For entries, counted from the right, were added by proxies you control. The rate limit uses that entry; with `0` it uses the socket address and ignores the header |
+| `TRUSTED_PROXY_HOPS` | no | `3` on Render, else `0` | How many X-Forwarded-For entries, counted from the right, were added by proxies in front of the app (on Render: the visitor's entry, Cloudflare's, Render's). The rate limit uses that entry; with `0` it uses the socket address and ignores the header |
 
 No Composio key is needed. No provider OAuth credentials are used anywhere.
 
