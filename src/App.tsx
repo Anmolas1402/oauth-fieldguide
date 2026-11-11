@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Activity, ComposioFacts, Guide, NoOAuthResult, PipelineEvent, StageId } from "../shared/schema.ts";
-import { STAGES } from "../shared/schema.ts";
+import { GuideSchema, STAGES } from "../shared/schema.ts";
 import { getExamples, getHealth, getSavedGuide, streamInvestigation, type Example, type Health } from "./api.ts";
 import { GuideView } from "./components/GuideView.tsx";
 import { Home } from "./components/Home.tsx";
@@ -65,7 +65,9 @@ export function App() {
 
     const apply = (e: PipelineEvent) => {
       if (e.type === "result") {
-        setGuide(e.guide);
+        const parsed = GuideSchema.safeParse(e.guide);
+        if (parsed.success) setGuide(parsed.data);
+        else setRun((prev) => (prev ? { ...prev, error: { code: "bad_result", message: "The server returned a guide this page could not read. Try running it again." } } : prev));
         return;
       }
       if (e.type === "no_oauth") {

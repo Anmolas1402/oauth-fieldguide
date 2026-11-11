@@ -115,8 +115,9 @@ export function createApp() {
         try {
           if (useCache) {
             // A repeat of an investigation this server already ran: replay its result, labelled as such.
-            send({ type: "composio", facts: cached.guide.composio });
-            send({ type: "result", guide: cached.guide });
+            const guide = GuideSchema.parse(cached.guide);
+            send({ type: "composio", facts: guide.composio });
+            send({ type: "result", guide });
           } else {
             const outcome = await investigate(query, send, abort.signal, { fresh });
             if (outcome.kind === "guide") cache.set(cacheKey, { at: Date.now(), guide: outcome.guide });

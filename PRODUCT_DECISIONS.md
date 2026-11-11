@@ -38,6 +38,10 @@ Built:
 | Examples open saved runs | A demo should not wait three minutes four times | Saved runs can go stale, so they are dated and re-runnable |
 | Single Node process, in-memory limits | Deployable anywhere with one command | No horizontal scaling |
 | Small research budget (9 pages, 6 searches) | Keeps runs to a few minutes and a few cents | More "unknown" for providers with sprawling docs |
+| Gemini free tier as the default model, Claude also supported | No Anthropic key was available; a free key lets an evaluator run it at no cost | 20 requests per model per day, weaker Lite models when quota runs out, so guides vary in depth |
+| Own keyless search (DuckDuckGo, Brave HTML) instead of a search API | Runs with one free key | Engines block automated traffic often; runs then rely on the model proposing documentation URLs |
+| Honest User-Agent, no bypassing of blocks | A research tool that disguises itself is not one to trust with "verified" labels | Fewer successful searches; some official sites (Xero) cannot be read |
+| Label sources official / Composio / third-party | A quote from an integration vendor's page is evidence of a claim, not of the provider's policy | A hostname heuristic, so it can misjudge a provider whose docs live on an unexpected domain |
 
 ## Agent vs human: where the line was drawn
 

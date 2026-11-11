@@ -1,4 +1,4 @@
-import type { Guide, PipelineEvent } from "../shared/schema.ts";
+import { GuideSchema, type Guide, type PipelineEvent } from "../shared/schema.ts";
 
 export type Health = { ok: boolean; liveResearch: boolean; model: string | null };
 export type Example = { slug: string; name: string; blurb: string; saved: boolean; investigatedAt: string | null };
@@ -19,7 +19,9 @@ export async function getSavedGuide(slug: string): Promise<Guide | null> {
   const res = await fetch(`/api/guides/${encodeURIComponent(slug)}`);
   if (res.status === 404) return null;
   if (!res.ok) throw new Error(`Could not load the saved investigation (HTTP ${res.status}).`);
-  return (await res.json()).guide;
+  const parsed = GuideSchema.safeParse((await res.json()).guide);
+  if (!parsed.success) throw new Error("The saved investigation could not be read.");
+  return parsed.data;
 }
 
 /** Streams pipeline events (newline-delimited JSON) from the server as they happen. */

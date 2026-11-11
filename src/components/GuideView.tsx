@@ -9,7 +9,12 @@ import {
 } from "../../shared/derive.ts";
 import { guideToChecklist, guideToMarkdown } from "../../shared/markdown.ts";
 import { eachClaim, type Guide } from "../../shared/schema.ts";
-import { ActorBadge, ActorGlyph, Button, ClaimLine, Section, SourceRefs, StatusChip, hostOf } from "./bits.tsx";
+import { AUTHORITY_LABEL, ActorBadge, ActorGlyph, Button, ClaimLine, Section, SourceRefs, StatusChip, hostOf } from "./bits.tsx";
+
+const formatRunTime = (ms: number) => {
+  const s = Math.round(ms / 1000);
+  return s < 120 ? `${s}s` : `${Math.round(s / 60)} min`;
+};
 
 const NAV = [
   ["snapshot", "Decision snapshot"],
@@ -161,7 +166,7 @@ export function GuideView({
           {g.meta.origin === "saved" ? "Saved investigation from" : "Investigated"} {formatDate(g.meta.investigatedAt)}
         </span>
         <span>{g.sources.length} sources</span>
-        <span>{Math.round(g.meta.durationMs / 1000)}s of research</span>
+        <span title="Wall-clock time of the investigation, including waits for overloaded or rate-limited models">{formatRunTime(g.meta.durationMs)} run time</span>
         <span className="font-mono text-xs">{g.meta.model}</span>
         <span role="status" className="text-accent">{copied}</span>
       </div>
@@ -185,6 +190,14 @@ export function GuideView({
               ))}
             </span>
           )}
+        </div>
+      )}
+
+      {g.validation.officialPagesRead === 0 && (
+        <div className="mt-3 rounded-md border border-warn/30 bg-warn-soft px-4 py-2.5 text-sm text-warn">
+          <span className="font-medium">No official {g.provider.name} documentation could be read in this run. </span>
+          Claims rest on Composio's pages and third-party pages, marked with dashed source ids. Check them against the provider's
+          own docs before relying on them; the investigation log shows which official pages failed and why.
         </div>
       )}
 
@@ -212,6 +225,11 @@ export function GuideView({
                 <br />
                 {counts.unknown} unknown
               </p>
+              {g.validation.thirdPartyOnly.length > 0 && (
+                <p className="mt-2 text-xs leading-5 text-warn">
+                  {g.validation.thirdPartyOnly.length} verified claim{g.validation.thirdPartyOnly.length === 1 ? "" : "s"} rest only on third-party pages
+                </p>
+              )}
             </li>
           </ol>
         </nav>
@@ -255,7 +273,8 @@ export function GuideView({
               </Cell>
             </div>
             <p className="mt-3 text-sm text-muted lg:hidden">
-              Evidence in this guide: {counts.verified} verified, {counts.inferred} inferred, {counts.unknown} unknown.
+              Evidence in this guide: {counts.verified} verified, {counts.inferred} inferred, {counts.unknown} unknown
+              {g.validation.thirdPartyOnly.length > 0 ? `; ${g.validation.thirdPartyOnly.length} verified claims rest only on third-party pages` : ""}.
             </p>
             {g.composio.faq.length > 0 && (
               <details className="mt-4 rounded-md border border-line bg-surface">
@@ -493,7 +512,7 @@ export function GuideView({
                           </a>
                           <p className="break-all font-mono text-xs text-muted">{s.url.replace(/^https:\/\//, "")}</p>
                         </td>
-                        <td className="whitespace-nowrap px-3 py-2.5 text-ink-2">{s.kind === "composio" ? "Composio docs" : "Provider or web page"}</td>
+                        <td className={`whitespace-nowrap px-3 py-2.5 ${s.authority === "third_party" ? "text-warn" : "text-ink-2"}`}>{AUTHORITY_LABEL[s.authority]}</td>
                         <td className="px-3 py-2.5">
                           {claims.length ? (
                             <details>

@@ -125,9 +125,10 @@ export function geminiDriver(model: string, client?: GoogleGenAI, candidates?: s
   const isTransient = (err: unknown, params: Params) => {
     if (params.config?.abortSignal?.aborted) return false;
     if (err instanceof ApiError) return [404, 429, 500, 502, 503, 504].includes(err.status);
-    return err instanceof Error && /abort|timeout|timed out/i.test(`${err.name} ${err.message}`);
+    return err instanceof Error && /abort|timeout|timed out|fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|socket hang up|network/i.test(`${err.name} ${err.message}`);
   };
-  const statusOf = (err: unknown) => (err instanceof ApiError ? `HTTP ${err.status}` : "timed out");
+  const statusOf = (err: unknown) =>
+    err instanceof ApiError ? `HTTP ${err.status}` : err instanceof Error && /fetch failed|ECONN|ENOTFOUND|socket|network/i.test(err.message) ? "network error" : "timed out";
 
   /**
    * For a standalone request (no conversation state), any candidate model will do: try each in
@@ -345,6 +346,8 @@ export function describeModelError(err: unknown): { code: string; message: strin
   const status =
     err instanceof ApiError ? err.status : err instanceof Anthropic.APIError ? (err.status ?? undefined) : undefined;
   if (err instanceof Anthropic.APIConnectionError) return { code: "model_network", message: "Could not reach the model API from the server." };
+  if (err instanceof Error && !(err instanceof ApiError) && /fetch failed|ECONNRESET|ETIMEDOUT|ENOTFOUND|socket hang up/i.test(err.message))
+    return { code: "model_network", message: "The connection to the model API dropped. Try again." };
   if (status === undefined) return null;
   const detail = err instanceof Error ? err.message.replace(/\s+/g, " ").slice(0, 240) : "";
   if (status === 401 || (status === 400 && /api key/i.test(detail)))

@@ -59,7 +59,7 @@ Your job in this phase is to gather evidence, not to write the guide. A second p
 
 Tools:
 - search_web finds candidate pages. Search often fails (the engines block automated requests). If it fails, do not stop and do not retry it: fetch the provider's official developer documentation directly at URLs you expect to exist, then follow the links shown in square brackets inside pages you have read. fetch_page tells you if a URL does not exist. Aim to read at least four official pages that cover registration, redirect URIs, scopes and review.
-- fetch_page retrieves one page and gives it a source id. Only retrieved pages count as evidence.
+- fetch_page retrieves one page and gives it a source id. Only retrieved pages count as evidence. Prefer the provider's own documentation; pages from integration vendors or blogs are labelled third-party in the guide. Some official sites cannot be read by this tool (they need JavaScript or block automated clients); when that happens, say so in the notes rather than relying silently on secondary pages.
 You have ${BUDGET.searches} searches and ${BUDGET.fetches} page fetches. When you already know which pages you need, request several fetches in the same turn.
 
 What to establish for the provider, from the provider's own official documentation wherever possible:
@@ -110,6 +110,7 @@ export async function runResearch(opts: {
   const counters = { fetches: 0, searches: 0 };
   let nextId = ledger.length + 1;
   const fetchedByUrl = new Map<string, LedgerSource>();
+  const failedUrls = new Map<string, string>();
 
   const composioContext = composio.listed
     ? [
@@ -152,6 +153,8 @@ export async function runResearch(opts: {
       const url = parsed.data.url.trim();
       const already = fetchedByUrl.get(url);
       if (already) return { id: call.id, name: call.name, output: `Already retrieved as source ${already.id}; cite that id.` };
+      const failedBefore = failedUrls.get(url);
+      if (failedBefore) return err(`${url} already failed in this investigation (${failedBefore}). Do not request it again.`);
       if (counters.fetches >= BUDGET.fetches) {
         log.fetches.push({ url, ok: false, sourceId: null, detail: "not fetched: page budget for this investigation was spent" });
         return err("Fetch budget spent. Write your research notes now from what you have.");
@@ -160,6 +163,7 @@ export async function runResearch(opts: {
       emit({ id: call.id, kind: "fetch", label: url, url, state: "running" });
       const page = await fetchPage(url, opts.fetchImpl);
       if (!page.ok) {
+        failedUrls.set(url, page.reason);
         log.fetches.push({ url, ok: false, sourceId: null, detail: page.reason });
         emit({ id: call.id, kind: "fetch", label: url, url, state: "failed", detail: page.reason });
         return err(`Could not retrieve ${url}: ${page.reason}. Do not cite this page.`);

@@ -92,6 +92,8 @@ export const SourceSchema = z.object({
   url: z.string(),
   title: z.string(),
   kind: z.enum(["composio", "provider_page"]),
+  /** Who published the page, from its hostname: the provider itself, Composio, or someone else. */
+  authority: z.enum(["official", "composio", "third_party"]).default("third_party"),
   retrievedAt: z.string(),
   chars: z.number(),
   truncated: z.boolean(),
@@ -165,6 +167,9 @@ export const GuideSchema = GuideDraftSchema.extend({
   validation: z.object({
     adjustments: z.array(AdjustmentSchema),
     counts: z.object({ verified: z.number(), inferred: z.number(), unknown: z.number() }),
+    /** Verified claims whose only supporting pages are third-party (not the provider, not Composio). */
+    thirdPartyOnly: z.array(z.string()).default([]),
+    officialPagesRead: z.number().default(0),
   }),
 });
 export type Guide = z.infer<typeof GuideSchema>;

@@ -1,6 +1,6 @@
 import { eachClaim, type Adjustment, type Claim, type Guide, type GuideDraft } from "../shared/schema.ts";
 
-export type VerifySource = { id: string; url: string; text: string };
+export type VerifySource = { id: string; url: string; text: string; authority?: "official" | "composio" | "third_party" };
 
 const norm = (s: string) =>
   s
@@ -123,8 +123,21 @@ export function verifyDraft(
 
   eachClaim(out, checkClaim);
 
-  // A review duration is only allowed when it survived verification.
+  // A review duration is only allowed when it survived verification, and every duration in the
+  // text must be one the quote itself states.
   const tl = out.externalReview.publishedTimeline;
+  if (tl.status === "verified" && tl.quote) {
+    const quoted = norm(tl.quote);
+    const unsupported = [...tl.text.matchAll(new RegExp(DURATION_RE.source, "gi"))].map((m) => m[0]).filter((d) => !quoted.includes(norm(d)));
+    if (unsupported.length) {
+      adjustments.push({
+        path: "externalReview.publishedTimeline",
+        change: "removed unsupported duration",
+        reason: `${unsupported.map((d) => `"${d}"`).join(", ")} is not in the quoted text, so only the quote is kept`,
+      });
+      tl.text = `The provider states: "${tl.quote}"`;
+    }
+  }
   if (tl.status !== "verified" && DURATION_RE.test(tl.text)) {
     adjustments.push({
       path: "externalReview.publishedTimeline",
@@ -171,14 +184,19 @@ export function verifyDraft(
   }
 
   const counts = { verified: 0, inferred: 0, unknown: 0 };
-  eachClaim(out, (c) => counts[c.status]++);
+  const thirdPartyOnly: string[] = [];
+  eachClaim(out, (c, path) => {
+    counts[c.status]++;
+    if (c.status === "verified" && c.sourceIds.length && c.sourceIds.every((id) => byId.get(id)?.authority === "third_party")) thirdPartyOnly.push(path);
+  });
+  const officialPagesRead = sources.filter((s) => s.authority === "official").length;
 
   return {
     draft: out,
     steps,
     scopes: { model: out.scopes.model, examples },
     console: { ...out.console, urlSeenInSources: urlSeen(out.console.url) },
-    validation: { adjustments, counts },
+    validation: { adjustments, counts, thirdPartyOnly, officialPagesRead },
   };
 }
 

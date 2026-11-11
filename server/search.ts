@@ -13,7 +13,8 @@ export type SearchOutcome =
   | { ok: true; engine: string; results: SearchResult[] }
   | { ok: false; reason: string; attempts: string[] };
 
-const UA = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36";
+// The app identifies itself honestly. If an engine blocks it, that is reported, never worked around.
+const UA = "oauth-fieldguide/0.1 (+research tool; reads public documentation)";
 const MAX_RESULTS = 8;
 const CHALLENGE_RE = /captcha|anomaly|unusual traffic|are you a robot|challenge-form|verify you are human/i;
 

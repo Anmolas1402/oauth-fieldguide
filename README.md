@@ -26,6 +26,7 @@ https://aistudio.google.com/apikey and set `GEMINI_API_KEY=...`. An Anthropic ke
 process and never sent to the browser. No search API key is needed.
 
 ```bash
+npm run check-model   # one tiny request, to confirm the key works
 npm run dev
 ```
 
@@ -56,7 +57,8 @@ Things worth trying:
 
 | Input | What it shows |
 |---|---|
-| `Xero` or `DocuSign` | A bring-your-own provider: managed OAuth "Not available", own app "Required" |
+| `Xero` | A bring-your-own provider: managed OAuth "Not available", own app "Required". Xero's main docs cannot be read by the tool, so this also shows the third-party source warnings |
+| `DocuSign` or `Zoom` | Unfamiliar providers whose official docs are server-rendered |
 | `Google` | An ambiguous name: the assumption is displayed with alternatives to pick |
 | `OpenAI` | A toolkit with API-key auth: the research stages are skipped, not faked |
 | `Zzqqx Corp` | A provider that does not exist: the guide says it could not be identified |
@@ -64,7 +66,7 @@ Things worth trying:
 
 The four example chips open **saved** investigations: earlier outputs of the same pipeline stored in
 `data/guides/`, labelled with their date. **Re-run live** on any of them runs the full pipeline again.
-To regenerate one: `npm run save-guide -- github`.
+To regenerate one: `npm run save-guide -- github` (add `--fresh` to ignore reusable research).
 
 ## How it works
 
@@ -84,14 +86,20 @@ browser ── POST /api/investigate ──> server (Hono, Node)
 - **Stage 3 is an agent loop** (`server/research.ts`). The model has two tools, and the server
   executes both:
   - `search_web` (`server/search.ts`) reads the public HTML results pages of DuckDuckGo, then Brave
-    Search, so no search key is needed. A bot-check page counts as a failure (not "no results"), the
-    blocking engine is skipped for 10 minutes, and every failure is shown in the progress view and log.
+    Search, so no search key is needed. The app identifies itself with its own User-Agent. A bot-check
+    page counts as a failure (not "no results"), the blocking engine is skipped for 10 minutes, and
+    every failure is shown in the progress view and log. Nothing tries to get past a block.
   - `fetch_page` (`server/fetchPage.ts`): https only, public hosts only, redirects re-checked, 30,000
     characters per page.
   Budgets: at most 6 searches, 9 pages, 8 model turns. The server keeps the text of every page it
   retrieved. If search is blocked, the model is told to fetch official documentation URLs directly.
-- **The model is behind a small driver** (`server/llm.ts`): Gemini (`gemini-3.8-flash` by default)
-  or Claude. Both get the same tools and prompts.
+- **The model is behind a small driver** (`server/llm.ts`): Gemini or Claude, with the same tools and
+  prompts. On Gemini it tries `gemini-3.8-flash`, `3.6-flash`, `3.5-flash`, `3.5-flash-lite`, then
+  `3.1-flash-lite`, moving on when one is overloaded, out of quota or times out, and stays on the one
+  that answers. The guide records the model actually used.
+- **Unfinished research is reused.** If the guide-writing step fails, the retrieved pages are kept for
+  six hours in the OS temp directory, and the next attempt reuses them instead of spending quota again.
+  The progress view says so. **Re-run live** always starts from scratch.
 - **Stage 4** (`server/compose.ts`) gets those page texts and the research notes and must return JSON
   matching `GuideDraftSchema` in `shared/schema.ts` (sent to the model as JSON Schema, then validated
   with Zod; one retry with the validation error, then it fails rather than show an invalid guide). Sources can only be cited by the ids the server
@@ -101,7 +109,11 @@ browser ── POST /api/investigate ──> server (Hono, Node)
     it becomes "inferred";
   - citations to ids that were never retrieved are removed;
   - a review duration that is not verified is deleted and replaced with "no timeline published";
-  - scope strings and console links are flagged when they do not appear in any retrieved page.
+  - scope strings and console links are flagged when they do not appear in any retrieved page;
+  - every duration in a verified review timeline must appear in its quote;
+  - a step done by clicking, signing in, pasting or submitting cannot be "agent can prepare";
+  - each source is labelled official, Composio or third-party from its hostname, verified claims that
+    rest only on third-party pages are counted, and a guide with no official page shows a warning.
   Every change is listed in the guide under "Validator adjustments".
 
 ### Layout
@@ -148,8 +160,15 @@ that allows a streaming response to stay open for a few minutes.
   some of the time. When both are blocked the investigation continues by fetching documentation
   URLs the model proposes, and the log says search failed. A search API would be more reliable;
   it was left out so the app runs with one free key.
-- **The free Gemini tier has a daily request quota.** One investigation uses roughly 5 to 12 model
-  calls. When the quota runs out the UI says so; it resets at midnight Pacific time.
+- **The free Gemini tier allows 20 requests per model per day.** One investigation uses 4 to 8 model
+  calls, and the five-model fallback stretches that to roughly 10 to 15 investigations a day. The
+  Lite models write thinner guides. When everything is exhausted the UI says so; quotas reset at
+  midnight Pacific time. A paid key removes this limit.
+- **Some official docs cannot be read.** Xero's documentation returns an almost empty page to the
+  tool. The guide then leans on Composio's and third-party pages and says so prominently.
+- **Small page budget.** A run can miss a page that would have answered a question. For example, Slack's
+  saved guide marks the Marketplace review timeline "unknown" although Slack publishes one on a page
+  that run did not read. "Unknown" always means "not in the retrieved pages", and the guide says that.
 - **Pages that need JavaScript or a login cannot be read.** The fetcher gets server-rendered HTML
   only. Such pages show up in the log as failed, and claims that depended on them stay unverified.
 - **"Verified" means "a retrieved page says this", not "this was tested in the provider's console".**
@@ -160,8 +179,6 @@ that allows a streaming response to stay open for a few minutes.
   authenticated `GET /api/v3.1/toolkits/{slug}` endpoint, so it is per toolkit, not per auth scheme.
 - **Quote matching is lenient about formatting** (case, quote marks, link targets, 80% of five-word
   runs). It can pass a quote with a small wording difference.
-- **Budgets are small on purpose** (9 pages, 6 searches). Providers with sprawling docs get a guide
-  with more "unknown" entries rather than a longer run.
 - **Rate limits and the result cache are in memory**, so they reset on restart and do not span
   multiple instances.
 - **A live run takes one to three minutes** and costs model tokens. Repeat requests for the same

@@ -16,17 +16,19 @@ import { PipelineError, runResearch, type LedgerSource, type ResearchResult } fr
 import { clearResearchCache, readResearchCache, writeResearchCache } from "./researchCache.ts";
 import { resolveProvider } from "./resolve.ts";
 import { verifyDraft } from "./verify.ts";
+import { classifySource } from "./authority.ts";
 
 export type PipelineOutcome =
   | { kind: "guide"; guide: Guide }
   | { kind: "no_oauth"; result: NoOAuthResult }
   | { kind: "error" };
 
-export const toPublicSource = (s: LedgerSource): Source => ({
+export const toPublicSource = (s: LedgerSource, providerName = "", slug: string | null = null): Source => ({
   id: s.id,
   url: s.url,
   title: s.title,
   kind: s.kind,
+  authority: s.kind === "composio" ? "composio" : classifySource(s.url, providerName, slug),
   retrievedAt: s.retrievedAt,
   chars: s.chars,
   truncated: s.truncated,
@@ -138,7 +140,7 @@ export async function investigate(
 
     if (facts.listed && facts.authSchemes.length > 0 && !usesOAuth) {
       for (const id of ["research", "compose", "verify"] as const) send({ type: "stage", id, state: "skipped", detail: "Not an OAuth toolkit" });
-      const result: NoOAuthResult = { kind: "no_oauth", query, investigatedAt: now(), composio: facts, sources: ledger.map(toPublicSource) };
+      const result: NoOAuthResult = { kind: "no_oauth", query, investigatedAt: now(), composio: facts, sources: ledger.map((s) => toPublicSource(s, facts.name ?? query, facts.slug)) };
       send({ type: "no_oauth", result });
       return { kind: "no_oauth", result };
     }
@@ -189,7 +191,8 @@ export async function investigate(
 
     // 5. Cross-check every claim against the retrieved text.
     begin("verify");
-    const checked = verifyDraft(draft, research.ledger);
+    const publicSources = research.ledger.map((s) => toPublicSource(s, providerName, facts.slug));
+    const checked = verifyDraft(draft, research.ledger.map((s, i) => ({ ...s, authority: publicSources[i].authority })));
     const guide: Guide = GuideSchema.parse({
       ...checked.draft,
       steps: checked.steps,
@@ -197,7 +200,7 @@ export async function investigate(
       console: checked.console,
       meta: { query, investigatedAt: now(), model: `${llm.provider}/${llm.model}`, durationMs: Date.now() - started, origin: "live" },
       composio: facts,
-      sources: research.ledger.map(toPublicSource),
+      sources: publicSources,
       log: research.log,
       validation: checked.validation,
     });

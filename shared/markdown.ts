@@ -19,6 +19,8 @@ export function guideToMarkdown(g: Guide, done: ReadonlySet<number> = new Set())
   const p = (...l: string[]) => out.push(...l);
 
   p(`# ${g.provider.name}: OAuth app setup guide`, "");
+  if (g.validation.officialPagesRead === 0)
+    p(`> **Caution:** no official ${g.provider.name} documentation could be read in this investigation. Claims rest on Composio and third-party pages.`, "");
   p(
     `Investigated ${formatDate(g.meta.investigatedAt)} by OAuth Fieldguide (${g.meta.model}). ` +
       `Evidence labels: **Verified** = quoted from a retrieved page; **Inferred** = not stated outright in a retrieved page; **Unknown** = could not be established.`,
@@ -89,13 +91,14 @@ export function guideToMarkdown(g: Guide, done: ReadonlySet<number> = new Set())
   }
 
   p("## Sources", "");
-  for (const s of g.sources) p(`- **${s.id}** [${s.title}](${s.url}), retrieved ${formatDate(s.retrievedAt)}`);
+  const AUTH = { official: "official provider docs", composio: "Composio docs", third_party: "third-party page" } as const;
+  for (const s of g.sources) p(`- **${s.id}** [${s.title}](${s.url}), ${AUTH[s.authority]}, retrieved ${formatDate(s.retrievedAt)}`);
   const failed = g.log.fetches.filter((f) => !f.ok);
   if (failed.length) {
     p("", "Pages that could not be retrieved:");
     for (const f of failed) p(`- ${f.url} (${f.detail})`);
   }
   const c = g.validation.counts;
-  p("", `Claims: ${c.verified} verified, ${c.inferred} inferred, ${c.unknown} unknown. Validator adjustments: ${g.validation.adjustments.length}.`, "");
+  p("", `Claims: ${c.verified} verified, ${c.inferred} inferred, ${c.unknown} unknown${g.validation.thirdPartyOnly.length ? ` (${g.validation.thirdPartyOnly.length} verified claims rest only on third-party pages)` : ""}. Validator adjustments: ${g.validation.adjustments.length}.`, "");
   return out.join("\n");
 }

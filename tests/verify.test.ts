@@ -66,6 +66,14 @@ describe("verifyDraft", () => {
     d.externalReview.publishedTimeline = { text: "Within 10 business days.", status: "verified", sourceIds: ["S3"], quote: "Security reviews are typically completed within 10 business days of submission." };
     expect(verifyDraft(d, src).draft.externalReview.publishedTimeline.text).toBe("Within 10 business days.");
   });
+  it("keeps only the quote when a verified timeline adds a duration the quote does not state", () => {
+    const d = makeDraft();
+    const src = [...sources, { id: "S3", url: "https://developers.acme.dev/review", text: "Restricted reviews can take several weeks to complete." }];
+    d.externalReview.publishedTimeline = { text: "Brand checks take 2-3 days; restricted reviews take several weeks.", status: "verified", sourceIds: ["S3"], quote: "Restricted reviews can take several weeks to complete." };
+    const r = verifyDraft(d, src);
+    expect(r.draft.externalReview.publishedTimeline.text).toBe('The provider states: "Restricted reviews can take several weeks to complete."');
+    expect(r.validation.adjustments.map((a) => a.change)).toContain("removed unsupported duration");
+  });
   it("flags scope strings and links that do not appear in retrieved pages", () => {
     expect(result.scopes.examples.map((e) => e.seenInSource)).toEqual([true, false]);
     expect(result.steps.map((s) => s.linkSeenInSources)).toEqual([true, false]);

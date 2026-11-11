@@ -1,0 +1,543 @@
+{
+  "providerStatus": "identified",
+  "provider": {
+    "name": "Gmail",
+    "description": "Gmail is Google’s email service, featuring spam protection, search functions, and seamless integration with other G Suite apps for productivity.",
+    "assumption": null
+  },
+  "oauthAppKind": "Google OAuth 2.0 Client",
+  "authMethod": {
+    "text": "OAuth 2.0 authorization using client ID and client secret, with support for authorization code flows.",
+    "status": "verified",
+    "sourceIds": [
+      "S6"
+    ],
+    "quote": "OAuth 2.0 allows users to share specific data with an application while keeping their usernames, passwords, and other information private."
+  },
+  "difficulty": {
+    "level": "high",
+    "rationale": "Registering with Google requires setting up Cloud projects, OAuth consent screens, and undergoing a verification process for any sensitive or restricted scopes."
+  },
+  "handsOnEffort": {
+    "estimate": "2-4 hours",
+    "basis": "Assumes existing account setup; additional time required for compliance documentation and potential verification wait times."
+  },
+  "externalReview": {
+    "requirement": "always",
+    "summary": {
+      "text": "Public apps requesting sensitive or restricted scopes must undergo Google's OAuth verification process.",
+      "status": "verified",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": "If your public application uses scopes that permit access to certain user data, it must complete a verification process."
+    },
+    "triggers": [
+      {
+        "text": "Apps requesting sensitive or restricted scopes.",
+        "status": "inferred",
+        "sourceIds": [
+          "S4"
+        ],
+        "quote": null
+      }
+    ],
+    "publishedTimeline": {
+      "text": "The provider states: \"the restricted scopes verification process can potentially take several weeks to complete.\"",
+      "status": "verified",
+      "sourceIds": [
+        "S5"
+      ],
+      "quote": "the restricted scopes verification process can potentially take several weeks to complete."
+    }
+  },
+  "prerequisites": [
+    {
+      "kind": "account",
+      "text": "A Google account with access to the Google Cloud Console.",
+      "status": "verified",
+      "sourceIds": [
+        "S6"
+      ],
+      "quote": "To run any of the code samples in this document, you'll need a Google Account"
+    },
+    {
+      "kind": "permission",
+      "text": "A Google Cloud project with the Gmail API enabled.",
+      "status": "verified",
+      "sourceIds": [
+        "S6"
+      ],
+      "quote": "Any application that calls Google APIs needs to enable those APIs in the API Console."
+    }
+  ],
+  "console": {
+    "name": "Google Cloud Console",
+    "url": "https://console.developers.google.com/",
+    "urlSeenInSources": true
+  },
+  "redirectRules": [
+    {
+      "text": "Redirect URIs must use HTTPS unless they are localhost.",
+      "status": "verified",
+      "sourceIds": [
+        "S7"
+      ],
+      "quote": "Redirect URIs must use the HTTPS scheme, not plain HTTP. Localhost URIs (including localhost IP address URIs) are exempt from this rule."
+    }
+  ],
+  "scopes": {
+    "model": {
+      "text": "Scopes define the level of access requested; use the most narrow scope possible.",
+      "status": "verified",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": "Generally, you should choose the most narrowly focused scope possible and avoid requesting scopes that your app doesn't require."
+    },
+    "examples": [
+      {
+        "scope": "https://www.googleapis.com/auth/gmail.readonly",
+        "grants": "View email messages and settings.",
+        "tier": "Restricted",
+        "sourceIds": [
+          "S4"
+        ],
+        "seenInSource": true
+      },
+      {
+        "scope": "https://www.googleapis.com/auth/gmail.send",
+        "grants": "Send email on your behalf.",
+        "tier": "Sensitive",
+        "sourceIds": [
+          "S4"
+        ],
+        "seenInSource": true
+      },
+      {
+        "scope": "https://www.googleapis.com/auth/gmail.labels",
+        "grants": "See and edit your email labels.",
+        "tier": "Non-sensitive",
+        "sourceIds": [
+          "S4"
+        ],
+        "seenInSource": true
+      }
+    ]
+  },
+  "steps": [
+    {
+      "title": "Create Google Cloud Project",
+      "action": "Create a new project in the Google Cloud Console.",
+      "where": "Google Cloud Console",
+      "link": "https://console.developers.google.com/apis/library",
+      "actor": "human_only",
+      "actorReason": "Requires administrative access to create cloud resources.",
+      "text": "Create a new project to host your OAuth credentials and enable APIs.",
+      "status": "verified",
+      "sourceIds": [
+        "S6"
+      ],
+      "quote": "If prompted, select a project, or create a new one.",
+      "linkSeenInSources": true
+    },
+    {
+      "title": "Enable Gmail API",
+      "action": "Enable the Gmail API for the created project.",
+      "where": "API Library",
+      "link": "https://console.developers.google.com/apis/library",
+      "actor": "agent_assists",
+      "actorReason": "The user must perform the selection and activation in the console.",
+      "text": "Find and enable the Gmail API for your project.",
+      "status": "verified",
+      "sourceIds": [
+        "S6"
+      ],
+      "quote": "Select the API you want to enable, then click the Enable button.",
+      "linkSeenInSources": true
+    },
+    {
+      "title": "Configure OAuth Consent Screen",
+      "action": "Set up app branding, privacy policy URL, and support contact details.",
+      "where": "OAuth Consent Screen / Branding Page",
+      "link": "https://console.developers.google.com/auth/branding",
+      "actor": "human_only",
+      "actorReason": "Requires business/legal information and identity validation.",
+      "text": "Configure the branding and required URLs before creating credentials.",
+      "status": "verified",
+      "sourceIds": [
+        "S5"
+      ],
+      "quote": "In the Branding page, provide your app's branding information, including app name, logo, developer contact information, and relevant links.",
+      "linkSeenInSources": true
+    },
+    {
+      "title": "Create OAuth Client ID",
+      "action": "Create a Web Application client ID and add redirect URIs.",
+      "where": "Google Auth Platform Clients",
+      "link": "https://console.developers.google.com/auth/clients",
+      "actor": "agent_assists",
+      "actorReason": "Requires entering the specific redirect URI provided by the application environment.",
+      "text": "Register a new client ID for web application access.",
+      "status": "verified",
+      "sourceIds": [
+        "S7"
+      ],
+      "quote": "Click CREATE CLIENT",
+      "linkSeenInSources": true
+    },
+    {
+      "title": "Register Credentials in Composio",
+      "action": "Save the Client ID and Secret in the Composio dashboard.",
+      "where": "Composio Dashboard",
+      "link": "https://dashboard.composio.dev/",
+      "actor": "agent_assists",
+      "actorReason": "User must securely handle secret values provided by the Cloud Console.",
+      "text": "Copy the credentials generated in the Google Console into the Composio auth config setup.",
+      "status": "inferred",
+      "sourceIds": [
+        "S3"
+      ],
+      "quote": null,
+      "linkSeenInSources": true
+    }
+  ],
+  "division": {
+    "agentPrepares": [
+      "Identify required Gmail scopes.",
+      "Define necessary redirect URI."
+    ],
+    "agentAssists": [
+      "Enable Gmail API in the console.",
+      "Provide guidance for creating OAuth client IDs.",
+      "Assist with entering credentials into Composio."
+    ],
+    "humanOnly": [
+      "Create Google Cloud project.",
+      "Configure OAuth consent screen.",
+      "Submit app for verification and security assessments.",
+      "Store and manage client secrets."
+    ]
+  },
+  "risks": [
+    {
+      "kind": "review",
+      "text": "Sensitive or restricted scopes require Google verification, which can take weeks.",
+      "status": "verified",
+      "sourceIds": [
+        "S5"
+      ],
+      "quote": "the restricted scopes verification process can potentially take several weeks to complete."
+    },
+    {
+      "kind": "security",
+      "text": "Never hardcode client secrets in source control.",
+      "status": "verified",
+      "sourceIds": [
+        "S6"
+      ],
+      "quote": "Don't store the client_secret.json file in a publicly-accessible location."
+    }
+  ],
+  "unresolved": [
+    "Does the application qualify for an exception to the verification requirements?",
+    "Does the app need to store restricted data requiring a third-party security assessment?"
+  ],
+  "nextActions": [
+    "Draft a privacy policy that includes how Google user data is accessed and used.",
+    "Verify ownership of authorized domains in the Google Search Console.",
+    "Decide which Gmail API scopes are minimally required for app features.",
+    "Prepare a test project to initiate the OAuth verification workflow."
+  ],
+  "meta": {
+    "query": "gmail",
+    "investigatedAt": "2026-11-11T06:19:27.420Z",
+    "model": "gemini/gemini-3.1-flash-lite",
+    "durationMs": 3638276,
+    "origin": "live"
+  },
+  "composio": {
+    "listed": true,
+    "name": "Gmail",
+    "slug": "GMAIL",
+    "category": "email",
+    "authSchemes": [
+      "OAUTH2"
+    ],
+    "managedOAuth": true,
+    "catalogueList": "managed",
+    "customGuideUrl": "https://composio.dev/auth/googleapps",
+    "faq": [
+      {
+        "question": "How do I set up custom Google OAuth credentials for Gmail?",
+        "answer": "For a step-by-step guide on creating and configuring your own Google OAuth credentials with Composio, see [How to create OAuth2 credentials for Google Apps](https://composio.dev/auth/googleapps)."
+      },
+      {
+        "question": "Why am I seeing \"App is blocked\" when connecting Gmail?",
+        "answer": "The OAuth client is requesting scopes that Google hasn't verified for that client. This usually happens when you add extra scopes beyond the defaults.\n\nRemove the additional scopes from your auth config, or create your own OAuth app and submit the scopes for verification. See [How to create OAuth2 credentials for Google Apps](https://composio.dev/auth/googleapps)."
+      },
+      {
+        "question": "Why am I getting \"Gmail API has not been used in project\" error?",
+        "answer": "When using custom OAuth credentials, the Gmail API must be enabled in the Google Cloud project that owns those credentials. Enable it in Google Cloud Console under APIs & Services, wait a few minutes, and retry."
+      },
+      {
+        "question": "Why am I getting \"Error 400: invalid_scope\"?",
+        "answer": "The requested scopes are invalid or incorrectly formatted in the authorization URL. Verify your scope values against the [Google OAuth scopes docs](https://developers.google.com/identity/protocols/oauth2). If you're creating auth configs programmatically, see the [programmatic auth config guide](/docs/authentication/programmatic-auth-configs)."
+      },
+      {
+        "question": "Why does the OAuth consent screen show \"Composio\" instead of my app?",
+        "answer": "By default, the consent screen uses Composio's OAuth app. To show your own app name and logo, create your own OAuth app and set a custom redirect URL. See [White-labeling authentication](/docs/authentication/white-labeling-authentication#using-your-own-oauth-apps)."
+      },
+      {
+        "question": "Why am I getting 401 errors on tool calls?",
+        "answer": "The user's access token is no longer valid. Common causes: the user revoked access, changed their password or 2FA, a Workspace admin policy changed, or Google's refresh token limit (~50 per account) was exceeded. Re-authenticating the user typically resolves this."
+      },
+      {
+        "question": "Why am I getting \"Quota Exhausted\" or \"rate limit exhausted\"?",
+        "answer": "Google enforces per-minute and daily request quotas. If you're using Composio's default OAuth app, you share that quota with other users, which can cause limits to be hit faster. Use your own OAuth app credentials to get a dedicated quota, and add exponential backoff and retries to handle transient rate limits."
+      },
+      {
+        "question": "Why can Gmail filter setup show an app-blocked error?",
+        "answer": "If a user on Composio-managed Gmail auth hits Google's \"app is blocked\" / unverified-app screen after adding `gmail.settings.basic`, use your own Google OAuth app verified for `https://www.googleapis.com/auth/gmail.settings.basic`, then reconnect."
+      }
+    ],
+    "matchNote": null,
+    "alternatives": []
+  },
+  "sources": [
+    {
+      "id": "S1",
+      "url": "https://docs.composio.dev/toolkits/gmail",
+      "title": "Gmail toolkit (Composio docs)",
+      "kind": "composio",
+      "authority": "composio",
+      "retrievedAt": "2026-11-11T05:18:52.409Z",
+      "chars": 5304,
+      "truncated": false
+    },
+    {
+      "id": "S2",
+      "url": "https://docs.composio.dev/toolkits/managed-auth",
+      "title": "Managed OAuth apps catalogue (Composio docs)",
+      "kind": "composio",
+      "authority": "composio",
+      "retrievedAt": "2026-11-11T05:18:51.841Z",
+      "chars": 1675,
+      "truncated": true
+    },
+    {
+      "id": "S3",
+      "url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app",
+      "title": "Managed vs custom auth (Composio docs)",
+      "kind": "composio",
+      "authority": "composio",
+      "retrievedAt": "2026-11-11T05:18:53.252Z",
+      "chars": 4571,
+      "truncated": false
+    },
+    {
+      "id": "S4",
+      "url": "https://developers.google.com/workspace/gmail/api/auth/scopes",
+      "title": "developers.google.com/workspace/gmail/api/auth/scopes",
+      "kind": "provider_page",
+      "authority": "official",
+      "retrievedAt": "2026-11-11T05:19:14.586Z",
+      "chars": 6651,
+      "truncated": false
+    },
+    {
+      "id": "S5",
+      "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+      "title": "developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+      "kind": "provider_page",
+      "authority": "official",
+      "retrievedAt": "2026-11-11T05:19:14.747Z",
+      "chars": 22188,
+      "truncated": false
+    },
+    {
+      "id": "S6",
+      "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+      "title": "Required, call the from_client_secrets_file method to retrieve the client ID from a",
+      "kind": "provider_page",
+      "authority": "official",
+      "retrievedAt": "2026-11-11T05:19:14.917Z",
+      "chars": 30000,
+      "truncated": true
+    },
+    {
+      "id": "S7",
+      "url": "https://support.google.com/cloud/answer/15549257?hl=en&visit_id=639299711555828699-1360922562&rd=1",
+      "title": "Manage OAuth Clients - Google Cloud Platform Console Help",
+      "kind": "provider_page",
+      "authority": "official",
+      "retrievedAt": "2026-11-11T05:19:18.980Z",
+      "chars": 24978,
+      "truncated": false
+    },
+    {
+      "id": "S8",
+      "url": "https://support.google.com/cloud/answer/13464323?hl=en",
+      "title": "When is verification not needed - Google Cloud Platform Console Help",
+      "kind": "provider_page",
+      "authority": "official",
+      "retrievedAt": "2026-11-11T05:59:46.153Z",
+      "chars": 4470,
+      "truncated": false
+    }
+  ],
+  "log": {
+    "searches": [
+      {
+        "query": "google cloud console create oauth client id web application redirect uri",
+        "results": [
+          {
+            "url": "https://support.google.com/cloud/answer/15549257?hl=en",
+            "title": "Manage OAuth Clients - Google Cloud Platform Console Help"
+          },
+          {
+            "url": "https://developers.google.com/identity/oauth2/web/guides/get-google-api-clientid",
+            "title": "Setup | Web guides | Google for Developers"
+          },
+          {
+            "url": "https://developers.google.com/identity/protocols/oauth2/javascript-implicit-flow",
+            "title": "OAuth 2.0 for Client-side Web Applications - Google Developers"
+          },
+          {
+            "url": "https://docs.cloud.google.com/iam/docs/workforce-manage-oauth-app",
+            "title": "Manage OAuth application - Google Cloud"
+          },
+          {
+            "url": "https://stackoverflow.com/questions/16693653/how-to-add-or-change-return-uri-in-google-console-for-oauth2",
+            "title": "How to add or change return uri in google console for oAuth2"
+          },
+          {
+            "url": "https://pinafly.com/guides/google-cloud/create-an-oauth-client-id",
+            "title": "How to create an OAuth client ID for Sign in with Google in Google Cloud"
+          },
+          {
+            "url": "https://support.google.com/googleapi/answer/6158849?hl=en",
+            "title": "Setting up OAuth 2.0 - API Console Help"
+          },
+          {
+            "url": "https://var.gg/en/blog/gcp-oauth-consent-client-id",
+            "title": "Google Cloud OAuth Consent Screen + OAuth Client ID (2026 New UI)"
+          }
+        ]
+      },
+      {
+        "query": "google oauth app verification requirements restricted scopes gmail",
+        "results": [
+          {
+            "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+            "title": "Restricted scope verification | App verification to use Google ..."
+          },
+          {
+            "url": "https://support.google.com/cloud/answer/13463073?hl=en",
+            "title": "OAuth App Verification Help Center - Google Help"
+          },
+          {
+            "url": "https://developers.google.com/workspace/gmail/api/auth/scopes",
+            "title": "Choose Gmail API scopes | Google for Developers"
+          },
+          {
+            "url": "https://developer.nylas.com/docs/provider-guides/google/google-verification-security-assessment-guide/",
+            "title": "Gmail restricted scopes: verification and CASA | Docs"
+          },
+          {
+            "url": "https://singhamandeep.com/google-oauth-verification-guide/",
+            "title": "Google OAuth Verification: How to Pass the Sensitive & Restricted Scope ..."
+          },
+          {
+            "url": "https://support.google.com/cloud/answer/13464325",
+            "title": "Restricted Scopes - Google Cloud Platform Console Help"
+          },
+          {
+            "url": "https://bright-softwares.com/blog/en/google-workspace/gmail-oauth-scope-tiers-what-every-workspace-addon-developer-must-know",
+            "title": "Gmail OAuth Scope Tiers: What Every Workspace Addon Developer Must Know"
+          },
+          {
+            "url": "https://developer.nylas.com/docs/cookbook/use-cases/build/google-oauth-scopes/",
+            "title": "Gmail API OAuth scopes reference | Docs - developer.nylas.com"
+          }
+        ]
+      },
+      {
+        "query": "site:support.google.com/cloud \"unverified app\" \"user cap\" 100",
+        "results": [
+          {
+            "url": "https://support.google.com/cloud/answer/7454865?hl=en-GB",
+            "title": "Unverified apps - Google Cloud Platform Console Help"
+          },
+          {
+            "url": "https://support.google.com/cloud/answer/13464323?hl=en",
+            "title": "When is verification not needed - Google Cloud Platform Console Help"
+          },
+          {
+            "url": "https://support.google.com/cloud/answer/13464018?hl=en-AU",
+            "title": "Changes to approved app - Google Cloud Platform Console Help"
+          }
+        ]
+      }
+    ],
+    "fetches": [
+      {
+        "url": "https://developers.google.com/workspace/gmail/api/auth/scopes",
+        "ok": true,
+        "sourceId": "S4",
+        "detail": "6,651 characters read"
+      },
+      {
+        "url": "https://developers.google.com/identity/protocols/oauth2/production-readiness/restricted-scope-verification",
+        "ok": true,
+        "sourceId": "S5",
+        "detail": "22,188 characters read"
+      },
+      {
+        "url": "https://developers.google.com/identity/protocols/oauth2/web-server",
+        "ok": true,
+        "sourceId": "S6",
+        "detail": "30,000 characters read (truncated at 30,000)"
+      },
+      {
+        "url": "https://support.google.com/cloud/answer/15549257?hl=en&visit_id=639299711555828699-1360922562&rd=1",
+        "ok": true,
+        "sourceId": "S7",
+        "detail": "24,978 characters read"
+      },
+      {
+        "url": "https://support.google.com/cloud/answer/7454865?hl=en",
+        "ok": false,
+        "sourceId": null,
+        "detail": "timed out after 15s"
+      },
+      {
+        "url": "https://support.google.com/cloud/answer/13464323?hl=en",
+        "ok": true,
+        "sourceId": "S8",
+        "detail": "4,470 characters read"
+      }
+    ]
+  },
+  "validation": {
+    "adjustments": [
+      {
+        "path": "externalReview.triggers[0]",
+        "change": "verified → inferred",
+        "reason": "the quoted text was not found in the cited page: \"If your app requests any restricted scopes and doesn't qualify for an exception, you need to satisfy the Additional requirements for specific API scopes\""
+      },
+      {
+        "path": "externalReview.publishedTimeline",
+        "change": "removed unsupported duration",
+        "reason": "\"2-3 days\" is not in the quoted text, so only the quote is kept (rule applied to the saved guide after the run)"
+      }
+    ],
+    "counts": {
+      "verified": 13,
+      "inferred": 2,
+      "unknown": 0
+    },
+    "thirdPartyOnly": [],
+    "officialPagesRead": 5
+  }
+}

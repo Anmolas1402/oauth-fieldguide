@@ -74,16 +74,18 @@ export function SourceRefs({ ids, sources }: { ids: string[]; sources: Source[] 
     <span className="inline-flex flex-wrap gap-1">
       {ids.map((id) => {
         const s = sources.find((x) => x.id === id);
+        const third = s?.authority === "third_party";
         return s ? (
           <a
             key={id}
             href={s.url}
             target="_blank"
             rel="noreferrer"
-            title={`${s.title}\n${s.url}`}
-            className="rounded border border-line px-1 font-mono text-[11px] leading-5 text-muted hover:border-accent hover:text-accent"
+            title={`${s.title}\n${s.url}${third ? "\nThird-party page, not the provider's own documentation" : ""}`}
+            className={`rounded border px-1 font-mono text-[11px] leading-5 hover:border-accent hover:text-accent ${third ? "border-dashed border-warn/60 text-warn" : "border-line text-muted"}`}
           >
             {id}
+            {third && <span className="sr-only"> (third-party page)</span>}
           </a>
         ) : null;
       })}
@@ -164,6 +166,8 @@ export function Button({
     </button>
   );
 }
+
+export const AUTHORITY_LABEL = { official: "Official provider docs", composio: "Composio docs", third_party: "Third-party page" } as const;
 
 export const hostOf = (url: string) => {
   try {

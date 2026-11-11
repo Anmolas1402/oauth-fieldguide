@@ -1,0 +1,351 @@
+{
+  "providerStatus": "identified",
+  "provider": {
+    "name": "GitHub",
+    "description": "A code hosting platform for version control and collaboration, offering Git-based repository management, issue tracking, and continuous integration features.",
+    "assumption": null
+  },
+  "oauthAppKind": "OAuth App",
+  "authMethod": {
+    "text": "OAuth 2.0",
+    "status": "verified",
+    "sourceIds": [
+      "S1"
+    ],
+    "quote": "Auth: OAUTH2"
+  },
+  "difficulty": {
+    "level": "low",
+    "rationale": "Standard OAuth flow with clear documentation in the GitHub developer console and easy integration via Composio auth configs."
+  },
+  "handsOnEffort": {
+    "estimate": "15-20 minutes",
+    "basis": "Assumes existing GitHub account and basic familiarity with the GitHub developer console."
+  },
+  "externalReview": {
+    "requirement": "none",
+    "summary": {
+      "text": "GitHub does not require an external review for standard OAuth applications to be functional, unless you intend to list them on the GitHub Marketplace.",
+      "status": "inferred",
+      "sourceIds": [],
+      "quote": null
+    },
+    "triggers": [],
+    "publishedTimeline": {
+      "text": "The provider publishes no timeline in the retrieved documentation.",
+      "status": "unknown",
+      "sourceIds": [],
+      "quote": null
+    }
+  },
+  "prerequisites": [
+    {
+      "kind": "account",
+      "text": "You must have a personal GitHub account or be an administrator for an organization to create and register an OAuth app.",
+      "status": "verified",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": "You can create and register an OAuth app under your personal account or under any organization you have administrative access to."
+    }
+  ],
+  "console": {
+    "name": "GitHub Developer Settings",
+    "url": "https://github.com/settings/developers",
+    "urlSeenInSources": false
+  },
+  "redirectRules": [
+    {
+      "text": "You can provide up to 10 authorization callback URLs.",
+      "status": "verified",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": "You can enter up to 10 callback URLs."
+    }
+  ],
+  "scopes": {
+    "model": {
+      "text": "Scopes are requested as a space-separated string in the authorization URL.",
+      "status": "verified",
+      "sourceIds": [
+        "S5"
+      ],
+      "quote": "You can specify multiple scopes by separating them with a space using %20"
+    },
+    "examples": [
+      {
+        "scope": "repo",
+        "grants": "Full access to public and private repositories.",
+        "tier": null,
+        "sourceIds": [
+          "S5"
+        ],
+        "seenInSource": true
+      },
+      {
+        "scope": "user",
+        "grants": "Read/write access to profile info.",
+        "tier": null,
+        "sourceIds": [
+          "S5"
+        ],
+        "seenInSource": true
+      },
+      {
+        "scope": "offline_access",
+        "grants": "Requests an expiring access token and a refresh token.",
+        "tier": null,
+        "sourceIds": [
+          "S5"
+        ],
+        "seenInSource": true
+      }
+    ]
+  },
+  "steps": [
+    {
+      "title": "Access Developer Settings",
+      "action": "Click profile picture > Settings > Developer settings > OAuth Apps > New OAuth App.",
+      "where": "GitHub Console",
+      "link": "https://github.com/settings/developers",
+      "actor": "human_only",
+      "actorReason": "Requires logged-in user with appropriate permissions.",
+      "text": "Navigate to the developer settings in the GitHub console to register a new application.",
+      "status": "inferred",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": null,
+      "linkSeenInSources": false
+    },
+    {
+      "title": "Configure App Details",
+      "action": "Enter the Application name, Homepage URL, and Authorization callback URL.",
+      "where": "GitHub Console",
+      "link": null,
+      "actor": "human_only",
+      "actorReason": "Developer must provide their own project-specific URLs.",
+      "text": "Fill in the required fields for the application, including the redirect URI provided by the Composio dashboard.",
+      "status": "inferred",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": null,
+      "linkSeenInSources": false
+    },
+    {
+      "title": "Register Application",
+      "action": "Click Register application.",
+      "where": "GitHub Console",
+      "link": null,
+      "actor": "human_only",
+      "actorReason": "Form submission is required by the user.",
+      "text": "Complete the creation process to receive your Client ID.",
+      "status": "verified",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": "Click Register application.",
+      "linkSeenInSources": false
+    },
+    {
+      "title": "Generate Client Secret",
+      "action": "Click Generate a new client secret.",
+      "where": "GitHub Console",
+      "link": null,
+      "actor": "human_only",
+      "actorReason": "Secrets must be generated and managed by the user.",
+      "text": "Create a client secret after registration to allow authentication.",
+      "status": "inferred",
+      "sourceIds": [],
+      "quote": null,
+      "linkSeenInSources": false
+    },
+    {
+      "title": "Connect to Composio",
+      "action": "Paste Client ID and Client Secret into the auth config.",
+      "where": "Composio Dashboard",
+      "link": "https://dashboard.composio.dev/~/project/auth-configs",
+      "actor": "agent_assists",
+      "actorReason": "Agent provides the UI, but user must paste sensitive credentials.",
+      "text": "Navigate to the Composio dashboard to create an auth config using your newly created GitHub credentials.",
+      "status": "verified",
+      "sourceIds": [
+        "S3"
+      ],
+      "quote": "Register an app in the provider's developer portal and add the redirect URI from the dashboard. Then copy the Client ID and Client Secret back into Composio.",
+      "linkSeenInSources": true
+    }
+  ],
+  "division": {
+    "agentPrepares": [
+      "Determine required OAuth scopes based on functionality needs.",
+      "Draft consent screen application information."
+    ],
+    "agentAssists": [
+      "Walk the user through adding credentials to the Composio dashboard."
+    ],
+    "humanOnly": [
+      "Create the OAuth app in the GitHub developer console.",
+      "Generate and handle the Client Secret.",
+      "Paste credentials into the dashboard."
+    ]
+  },
+  "risks": [
+    {
+      "kind": "limit",
+      "text": "A user or organization can own up to 100 OAuth apps.",
+      "status": "verified",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": "A user or organization can own up to 100 OAuth apps."
+    },
+    {
+      "kind": "security",
+      "text": "Expiring user access tokens are enabled by default for new OAuth apps.",
+      "status": "verified",
+      "sourceIds": [
+        "S4"
+      ],
+      "quote": "Expire user access tokens is enabled by default."
+    }
+  ],
+  "unresolved": [
+    "Confirm if the application needs special approval for high-level scopes like enterprise admin access."
+  ],
+  "nextActions": [
+    "Log into GitHub Developer Settings to initiate app registration.",
+    "Copy the Redirect URI from the Composio dashboard auth config page.",
+    "Generate the Client Secret after completing the GitHub form.",
+    "Paste the Client ID and Client Secret into the Composio dashboard.",
+    "Test the connection by triggering a tool call in your environment."
+  ],
+  "meta": {
+    "query": "github",
+    "investigatedAt": "2026-11-10T21:02:52.384Z",
+    "model": "gemini/gemini-3.1-flash-lite",
+    "durationMs": 158888,
+    "origin": "live"
+  },
+  "composio": {
+    "listed": true,
+    "name": "GitHub",
+    "slug": "GITHUB",
+    "category": "developer tools",
+    "authSchemes": [
+      "OAUTH2"
+    ],
+    "managedOAuth": true,
+    "catalogueList": "managed",
+    "customGuideUrl": null,
+    "faq": [
+      {
+        "question": "Does Composio support GitHub Apps?",
+        "answer": "Yes. You can bring your own GitHub App by configuring its client ID and client secret in the GitHub auth config.\n\nThe GitHub App installation step is separate from the OAuth credential setup. The user still needs to install the GitHub App on the relevant account or organization and grant repository access before GitHub App based tool calls can work. GitHub App permissions come from the app's GitHub settings and installation grant, not from auth config scopes.\n\nComposio does not currently provide the GitHub App installation link automatically during this flow. Provide your GitHub App installation link to the user, have them install the app, then complete the connection. Built-in installation-…"
+      }
+    ],
+    "matchNote": null,
+    "alternatives": []
+  },
+  "sources": [
+    {
+      "id": "S1",
+      "url": "https://docs.composio.dev/toolkits/github",
+      "title": "GitHub toolkit (Composio docs)",
+      "kind": "composio",
+      "authority": "composio",
+      "retrievedAt": "2026-11-10T21:00:17.841Z",
+      "chars": 1162,
+      "truncated": false
+    },
+    {
+      "id": "S2",
+      "url": "https://docs.composio.dev/toolkits/managed-auth",
+      "title": "Managed OAuth apps catalogue (Composio docs)",
+      "kind": "composio",
+      "authority": "composio",
+      "retrievedAt": "2026-11-10T21:00:14.136Z",
+      "chars": 1677,
+      "truncated": true
+    },
+    {
+      "id": "S3",
+      "url": "https://docs.composio.dev/docs/authentication/custom-app-vs-managed-app",
+      "title": "Managed vs custom auth (Composio docs)",
+      "kind": "composio",
+      "authority": "composio",
+      "retrievedAt": "2026-11-10T21:00:18.504Z",
+      "chars": 4571,
+      "truncated": false
+    },
+    {
+      "id": "S4",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+      "title": "Creating an OAuth app - GitHub Docs",
+      "kind": "provider_page",
+      "authority": "official",
+      "retrievedAt": "2026-11-10T21:02:25.140Z",
+      "chars": 2732,
+      "truncated": false
+    },
+    {
+      "id": "S5",
+      "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps",
+      "title": "Scopes for OAuth apps - GitHub Docs",
+      "kind": "provider_page",
+      "authority": "official",
+      "retrievedAt": "2026-11-10T21:02:28.060Z",
+      "chars": 10479,
+      "truncated": false
+    }
+  ],
+  "log": {
+    "searches": [
+      {
+        "query": "github developer oauth apps creating an oauth app docs",
+        "results": []
+      },
+      {
+        "query": "\"github app\" vs \"oauth app\" rate limits verification limits github docs",
+        "results": []
+      }
+    ],
+    "fetches": [
+      {
+        "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/creating-an-oauth-app",
+        "ok": true,
+        "sourceId": "S4",
+        "detail": "2,732 characters read"
+      },
+      {
+        "url": "https://docs.github.com/en/apps/oauth-apps/building-oauth-apps/scopes-for-oauth-apps",
+        "ok": true,
+        "sourceId": "S5",
+        "detail": "10,479 characters read"
+      }
+    ]
+  },
+  "validation": {
+    "adjustments": [
+      {
+        "path": "steps[0]",
+        "change": "verified → inferred",
+        "reason": "the quoted text was not found in the cited page: \"In the left sidebar, click OAuth apps. Click New OAuth App.\""
+      },
+      {
+        "path": "steps[1]",
+        "change": "verified → inferred",
+        "reason": "the quoted text was not found in the cited page: \"In \"Application name\", type the name of your app. In \"Homepage URL\", type the full URL to your app's website. In \"Authorization callback URL\", type the callback…\""
+      }
+    ],
+    "counts": {
+      "verified": 8,
+      "inferred": 4,
+      "unknown": 1
+    },
+    "thirdPartyOnly": [],
+    "officialPagesRead": 2
+  }
+}
